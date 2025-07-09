@@ -24,7 +24,8 @@ class StyleManager:
         css_files = {
             'themes': 'themes.css',
             'chat': 'chat.css',
-            'launcher': 'launcher.css'
+            'launcher': 'launcher.css',
+            'config': 'config.css'
         }
         
         for name, filename in css_files.items():
@@ -104,7 +105,7 @@ class StyleManager:
             theme = self.current_theme
         
         if components is None:
-            components = ['chat', 'launcher']
+            components = ['chat', 'launcher', 'config']
         
         styles = []
         

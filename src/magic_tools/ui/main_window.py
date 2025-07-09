@@ -11,6 +11,7 @@ from ..ai import AIManager
 from ..tools import ToolManager
 from .launcher_widget import LauncherWidget
 from .ai_chat_widget import AIChatWidget
+from .config_widget import ConfigWidget
 from .style import StyleManager
 
 
@@ -33,7 +34,8 @@ class MainWindow(QtWidgets.QMainWindow):
         # Initialize UI components
         self.launcher_widget = None
         self.ai_chat_widget = None
-        self.current_mode = "launcher"  # "launcher" or "ai_chat"
+        self.config_widget = None
+        self.current_mode = "launcher"  # "launcher", "ai_chat", or "config"
         
         # Animation for smooth transitions
         self.fade_animation = None
@@ -87,6 +89,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ai_chat_widget = AIChatWidget(self.ai_manager)
         self.main_layout.addWidget(self.ai_chat_widget)
         
+        # Create and add config widget
+        self.config_widget = ConfigWidget(self.config_manager)
+        self.main_layout.addWidget(self.config_widget)
+        
         # Set initial widget
         self.main_layout.setCurrentWidget(self.launcher_widget)
     
@@ -94,11 +100,16 @@ class MainWindow(QtWidgets.QMainWindow):
         """Setup signal connections."""
         # Connect launcher widget signals
         self.launcher_widget.ai_chat_requested.connect(self.show_ai_chat)
+        self.launcher_widget.config_requested.connect(self.show_config)
         self.launcher_widget.tool_executed.connect(self.on_tool_executed)
         
         # Connect AI chat widget signals
         self.ai_chat_widget.back_to_launcher.connect(self.show_launcher)
         self.ai_chat_widget.close_requested.connect(self.hide)
+        
+        # Connect config widget signals
+        self.config_widget.back_to_launcher.connect(self.show_launcher)
+        self.config_widget.settings_changed.connect(self.on_settings_changed)
     
     def apply_theme(self):
         """Apply theme styling to the window."""
@@ -187,6 +198,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ai_chat_widget.focus_input()
         self.logger.debug("Switched to AI chat mode")
     
+    def show_config(self):
+        """Switch to config mode."""
+        self.current_mode = "config"
+        self.main_layout.setCurrentWidget(self.config_widget)
+        self.logger.debug("Switched to config mode")
+    
     def show_quick_search(self):
         """Show the window in quick search mode."""
         self.show()
@@ -201,6 +218,30 @@ class MainWindow(QtWidgets.QMainWindow):
         # Optionally hide the window after tool execution
         # You can customize this behavior based on user preferences
         # self.hide()
+    
+    def on_settings_changed(self, new_settings):
+        """Handle settings changes from the config widget."""
+        self.logger.info("Settings changed, updating application...")
+        
+        # Update the config manager's settings
+        self.config_manager.settings = new_settings
+        
+        # Update managers directly since we have references
+        self.ai_manager.update_settings(new_settings.ai)
+        self.tool_manager.update_settings(new_settings.tools)
+        
+        # Update UI settings
+        self.ui_settings = new_settings.ui
+        self.update_settings(new_settings.ui)
+        
+        # Signal the parent app to update hotkeys if possible
+        try:
+            from PyQt5.QtWidgets import QApplication
+            app = QApplication.instance()
+            if hasattr(app, 'update_hotkeys'):
+                app.update_hotkeys()
+        except Exception as e:
+            self.logger.warning(f"Could not update hotkeys: {e}")
     
     def update_settings(self, ui_settings: UISettings):
         """Update UI settings and apply changes."""
@@ -227,6 +268,8 @@ class MainWindow(QtWidgets.QMainWindow):
             self.launcher_widget.update_settings(ui_settings)
         if self.ai_chat_widget:
             self.ai_chat_widget.update_settings(ui_settings)
+        if self.config_widget:
+            self.config_widget.update_settings(ui_settings)
         
         self.logger.info("UI settings updated")
     
@@ -240,6 +283,9 @@ class MainWindow(QtWidgets.QMainWindow):
                 self.show_ai_chat()
             else:
                 self.show_launcher()
+        elif event.key() == Qt.Key_Comma and event.modifiers() == Qt.ControlModifier:
+            # Open settings with Ctrl+,
+            self.show_config()
         else:
             super().keyPressEvent(event)
     

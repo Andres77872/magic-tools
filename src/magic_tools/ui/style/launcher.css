@@ -50,4 +50,17 @@ QPushButton[class="launcher-ai-chat-button"] {
 
 QPushButton[class="launcher-ai-chat-button"]:hover {
     background-color: rgba(0, 122, 204, 150);
+}
+
+QPushButton[class="launcher-settings-button"] {
+    background-color: rgba(100, 100, 100, 150);
+    border: 1px solid #666666;
+    border-radius: 15px;
+    color: #ffffff;
+    font-size: 14px;
+}
+
+QPushButton[class="launcher-settings-button"]:hover {
+    background-color: rgba(120, 120, 120, 180);
+    border-color: #999999;
 } 

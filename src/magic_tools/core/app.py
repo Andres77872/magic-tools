@@ -86,6 +86,9 @@ class MagicToolsApp(QtWidgets.QApplication):
         
         # Connect application quit signal
         self.aboutToQuit.connect(self.cleanup)
+        
+        # Connect main window settings changes to reload hotkeys
+        self.main_window.config_widget.settings_changed.connect(self.on_settings_changed)
     
     def setup_hotkeys(self):
         """Set up global hotkeys based on current settings."""
@@ -102,6 +105,12 @@ class MagicToolsApp(QtWidgets.QApplication):
         self.hotkey_manager.update_hotkey('toggle', hotkey_settings.toggle_shortcut)
         self.hotkey_manager.update_hotkey('ai_chat', hotkey_settings.ai_chat_shortcut)
         self.hotkey_manager.update_hotkey('quick_search', hotkey_settings.quick_search_shortcut)
+    
+    def on_settings_changed(self, new_settings):
+        """Handle settings changes from the config widget."""
+        self.logger.info("Application received settings changes")
+        self.settings = new_settings
+        self.update_hotkeys()
     
     def reload_settings(self):
         """Reload settings from configuration."""

@@ -89,6 +89,7 @@ class LauncherWidget(QtWidgets.QWidget):
     """Main launcher widget with search and tool grid."""
     
     ai_chat_requested = pyqtSignal()
+    config_requested = pyqtSignal()
     tool_executed = pyqtSignal(str, object)  # tool_name, result
     
     def __init__(self, tool_manager: ToolManager, ai_manager: AIManager, parent=None):
@@ -145,11 +146,19 @@ class LauncherWidget(QtWidgets.QWidget):
         
         # AI status indicator
         self.ai_status_label = QtWidgets.QLabel("🤖 AI Ready" if self.ai_manager.is_available() else "🤖 AI Offline")
-        self.ai_status_label.setAlignment(Qt.AlignRight)
+        self.ai_status_label.setAlignment(Qt.AlignCenter)
         self.ai_status_label.setProperty("class", "launcher-ai-status")
+        
+        # Settings button
+        settings_button = QtWidgets.QPushButton("⚙️")
+        settings_button.setFixedSize(30, 30)
+        settings_button.setToolTip("Settings (Ctrl+,)")
+        settings_button.clicked.connect(self.config_requested.emit)
+        settings_button.setProperty("class", "launcher-settings-button")
         
         header_layout.addWidget(title_label)
         header_layout.addWidget(self.ai_status_label)
+        header_layout.addWidget(settings_button)
         
         self.main_layout.addLayout(header_layout)
     

@@ -1,0 +1,53 @@
+/* Launcher Widget Styles */
+
+/* Tool Button Styles */
+QPushButton[class="tool-button"] {
+    background-color: rgba(80, 80, 80, 150);
+    border: 1px solid #666666;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 4px;
+}
+
+QPushButton[class="tool-button"]:hover {
+    background-color: rgba(100, 100, 100, 180);
+    border-color: #007acc;
+}
+
+QPushButton[class="tool-button"]:pressed {
+    background-color: rgba(60, 60, 60, 150);
+}
+
+/* Header Styles */
+QLabel[class="launcher-title"] {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+    margin-bottom: 5px;
+}
+
+QLabel[class="launcher-ai-status"] {
+    font-size: 12px;
+    color: #cccccc;
+    margin-bottom: 5px;
+}
+
+/* Status Bar Styles */
+QLabel[class="launcher-tool-count"] {
+    font-size: 10px;
+    color: #999999;
+}
+
+QPushButton[class="launcher-ai-chat-button"] {
+    background-color: rgba(0, 122, 204, 100);
+    border: 1px solid #007acc;
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 10px;
+}
+
+QPushButton[class="launcher-ai-chat-button"]:hover {
+    background-color: rgba(0, 122, 204, 150);
+} 

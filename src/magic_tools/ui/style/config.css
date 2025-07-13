@@ -1,0 +1,214 @@
+/* Configuration Widget Styles */
+
+/* Header Styles */
+QPushButton[class="config-back-button"] {
+    background-color: rgba(100, 100, 100, 150);
+    border: 1px solid #666666;
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 11px;
+}
+
+QPushButton[class="config-back-button"]:hover {
+    background-color: rgba(120, 120, 120, 150);
+}
+
+QLabel[class="config-title"] {
+    font-size: 18px;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+/* Group Box Styles */
+QGroupBox {
+    font-weight: bold;
+    border: 2px solid #555555;
+    border-radius: 8px;
+    margin-top: 10px;
+    padding-top: 10px;
+    color: #ffffff;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 8px 0 8px;
+    color: #ffffff;
+    background-color: rgba(30, 30, 30, 240);
+}
+
+/* Form Controls */
+QComboBox {
+    background-color: rgba(50, 50, 50, 200);
+    border: 1px solid #555555;
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: #ffffff;
+    min-width: 120px;
+}
+
+QComboBox:hover {
+    border-color: #007acc;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left-width: 1px;
+    border-left-color: #555555;
+    border-left-style: solid;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+QComboBox::down-arrow {
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid #ffffff;
+    margin: 2px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: rgba(50, 50, 50, 240);
+    border: 1px solid #555555;
+    color: #ffffff;
+    selection-background-color: rgba(0, 122, 204, 150);
+}
+
+QSpinBox, QDoubleSpinBox {
+    background-color: rgba(50, 50, 50, 200);
+    border: 1px solid #555555;
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: #ffffff;
+    min-width: 80px;
+}
+
+QSpinBox:hover, QDoubleSpinBox:hover {
+    border-color: #007acc;
+}
+
+QSpinBox::up-button, QDoubleSpinBox::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right;
+    width: 16px;
+    border-left-width: 1px;
+    border-left-color: #555555;
+    border-left-style: solid;
+    border-top-right-radius: 4px;
+}
+
+QSpinBox::down-button, QDoubleSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    width: 16px;
+    border-left-width: 1px;
+    border-left-color: #555555;
+    border-left-style: solid;
+    border-bottom-right-radius: 4px;
+}
+
+QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
+    image: none;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-bottom: 3px solid #ffffff;
+    margin: 2px;
+}
+
+QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
+    image: none;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 3px solid #ffffff;
+    margin: 2px;
+}
+
+QCheckBox {
+    color: #ffffff;
+    spacing: 8px;
+}
+
+QCheckBox::indicator {
+    width: 16px;
+    height: 16px;
+    border: 1px solid #555555;
+    border-radius: 3px;
+    background-color: rgba(50, 50, 50, 200);
+}
+
+QCheckBox::indicator:checked {
+    background-color: rgba(0, 122, 204, 200);
+    border-color: #007acc;
+}
+
+QCheckBox::indicator:checked:hover {
+    background-color: rgba(0, 122, 204, 230);
+}
+
+QCheckBox::indicator:hover {
+    border-color: #007acc;
+}
+
+/* Button Styles */
+QPushButton[class="config-save-button"] {
+    background-color: rgba(0, 150, 0, 150);
+    border: 1px solid #00aa00;
+    border-radius: 4px;
+    color: #ffffff;
+    font-weight: bold;
+    padding: 8px 16px;
+    min-width: 60px;
+}
+
+QPushButton[class="config-save-button"]:hover {
+    background-color: rgba(0, 150, 0, 200);
+}
+
+QPushButton[class="config-cancel-button"] {
+    background-color: rgba(100, 100, 100, 150);
+    border: 1px solid #666666;
+    border-radius: 4px;
+    color: #ffffff;
+    padding: 8px 16px;
+    min-width: 60px;
+}
+
+QPushButton[class="config-cancel-button"]:hover {
+    background-color: rgba(120, 120, 120, 150);
+}
+
+QPushButton[class="config-reset-button"] {
+    background-color: rgba(150, 50, 50, 150);
+    border: 1px solid #cc4444;
+    border-radius: 4px;
+    color: #ffffff;
+    padding: 8px 16px;
+    min-width: 100px;
+}
+
+QPushButton[class="config-reset-button"]:hover {
+    background-color: rgba(150, 50, 50, 200);
+}
+
+/* Form Layout Styling */
+QFormLayout QLabel {
+    color: #cccccc;
+    font-weight: normal;
+    margin-bottom: 4px;
+}
+
+/* Disabled Controls */
+QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {
+    background-color: rgba(40, 40, 40, 100);
+    color: #666666;
+    border-color: #444444;
+}
+
+QPushButton:disabled {
+    background-color: rgba(40, 40, 40, 100);
+    color: #666666;
+    border-color: #444444;
+} 

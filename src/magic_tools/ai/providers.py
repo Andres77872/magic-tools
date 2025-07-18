@@ -69,37 +69,40 @@ class OpenAIProvider(BaseAIProvider):
         self.api_key = api_key
         self.base_url = base_url.rstrip('/')
         self.model = model
-        self.session = None
-        
-        # Initialize aiohttp session
-        self._initialize_session()
+        # Don't keep a persistent session - create a new one for each request
+        # This avoids issues with closed event loops
     
-    def _initialize_session(self):
-        """Initialize aiohttp session."""
+    async def _create_session(self):
+        """Create a new aiohttp session for the current request."""
         try:
             import aiohttp
             if self.api_key:
-                self.session = aiohttp.ClientSession(
+                # Always create a fresh session for each request
+                session = aiohttp.ClientSession(
                     headers={
                         'Authorization': f'Bearer {self.api_key}',
                         'Content-Type': 'application/json'
                     }
                 )
-                self.logger.info("OpenAI aiohttp session initialized")
+                self.logger.info("OpenAI aiohttp session created")
+                return session
             else:
                 self.logger.warning("OpenAI API key not provided")
+                return None
         except ImportError:
             self.logger.error("aiohttp library not installed. Run: pip install aiohttp")
+            return None
         except Exception as e:
-            self.logger.error(f"Failed to initialize aiohttp session: {e}")
+            self.logger.error(f"Failed to create aiohttp session: {e}")
+            return None
     
     def is_available(self) -> bool:
         """Check if OpenAI provider is available."""
-        return self.session is not None and bool(self.api_key)
+        return bool(self.api_key)
     
     async def generate_response(self, messages: List[Dict[str, str]]) -> AIResponse:
         """Generate response using OpenAI API."""
-        if not self.is_available():
+        if not bool(self.api_key):  # Check API key without relying on is_available
             return AIResponse(
                 content="OpenAI provider is not available. Please check your API key.",
                 success=False,
@@ -107,6 +110,16 @@ class OpenAIProvider(BaseAIProvider):
             )
         
         try:
+            # Create a fresh session for this request
+            session = await self._create_session()
+            
+            if not session:
+                return AIResponse(
+                    content="Failed to create OpenAI session. Please try again.",
+                    success=False,
+                    error="Session creation failed"
+                )
+            
             import aiohttp
             import json
             
@@ -117,7 +130,7 @@ class OpenAIProvider(BaseAIProvider):
                 "temperature": self.temperature
             }
             
-            async with self.session.post(
+            async with session.post(
                 f"{self.base_url}/chat/completions",
                 json=payload
             ) as response:
@@ -156,12 +169,18 @@ class OpenAIProvider(BaseAIProvider):
     
     async def stream_response(self, messages: List[Dict[str, str]]) -> AsyncGenerator[str, None]:
         """Stream response using OpenAI API."""
-        if not self.is_available():
+        if not bool(self.api_key):  # Check API key without relying on is_available
             yield "OpenAI provider is not available. Please check your API key."
             return
         
         try:
-            import aiohttp
+            # Create a fresh session for this request
+            session = await self._create_session()
+            
+            if not session:
+                yield "Failed to create OpenAI session. Please try again."
+                return
+                
             import json
             
             payload = {
@@ -172,7 +191,7 @@ class OpenAIProvider(BaseAIProvider):
                 "stream": True
             }
             
-            async with self.session.post(
+            async with session.post(
                 f"{self.base_url}/chat/completions",
                 json=payload
             ) as response:
@@ -211,17 +230,19 @@ class OpenAIProvider(BaseAIProvider):
             self.api_key = settings.api_key
             self.base_url = settings.base_url.rstrip('/')
             
-            # Close old session and create new one
+            # Close old session if exists
             if self.session:
-                asyncio.create_task(self.session.close())
-            self._initialize_session()
+                if not self.session.closed:
+                    self.session.connector.close()
+                self.session = None
+            
+            # Don't initialize a new session here
+            # It will be initialized lazily when needed in async methods
     
     def cleanup(self):
-        """Clean up aiohttp session."""
-        if self.session:
-            asyncio.create_task(self.session.close())
-            self.session = None
-        super().cleanup()
+        """Clean up resources."""
+        # No need to clean up persistent sessions since we create new ones for each request
+        self.logger.info("OpenAI provider cleanup completed")
 
 
 class LocalProvider(BaseAIProvider):

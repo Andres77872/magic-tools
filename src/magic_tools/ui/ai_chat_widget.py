@@ -50,38 +50,89 @@ class AIWorker(QThread):
     streaming_chunk = pyqtSignal(str)
     error_occurred = pyqtSignal(str)
     
-    def __init__(self, ai_manager: AIManager, message: str, context: str = ""):
+    def __init__(self, ai_manager: AIManager, message: str, context: str = "", logger=None):
         super().__init__()
         self.ai_manager = ai_manager
         self.message = message
         self.context = context
         self.streaming = False
+        self.logger = logger or logging.getLogger(__name__)
     
     def run(self):
         """Run the AI request in a separate thread."""
+        # Each thread needs its own event loop
+        loop = None
+        
         try:
-            # Set up event loop for async operations
+            # Create a new event loop for this thread
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
             
             if self.streaming:
-                # Stream response
-                async def stream_response():
-                    async for chunk in self.ai_manager.stream_response(self.message, self.context):
-                        self.streaming_chunk.emit(chunk)
-                
-                loop.run_until_complete(stream_response())
+                self._handle_streaming_response(loop)
             else:
-                # Get complete response
-                response = loop.run_until_complete(
-                    self.ai_manager.send_message(self.message, self.context)
-                )
-                self.response_received.emit(response)
+                self._handle_complete_response(loop)
                 
         except Exception as e:
-            self.error_occurred.emit(str(e))
+            self.error_occurred.emit(f"Thread error: {str(e)}")
+            self.logger.error(f"Thread error: {str(e)}")
         finally:
+            # Make sure to clean up the event loop properly
+            if loop is not None:
+                self._cleanup_loop(loop)
+    
+    def _handle_streaming_response(self, loop):
+        """Handle streaming response mode."""
+        async def stream_response():
+            try:
+                async for chunk in self.ai_manager.stream_response(self.message, self.context):
+                    self.streaming_chunk.emit(chunk)
+            except Exception as e:
+                self.error_occurred.emit(f"Streaming error: {str(e)}")
+                self.logger.error(f"Streaming error: {str(e)}")
+        
+        # Create a task and run it to completion
+        task = loop.create_task(stream_response())
+        loop.run_until_complete(task)
+    
+    def _handle_complete_response(self, loop):
+        """Handle complete response mode."""
+        async def get_response():
+            try:
+                return await self.ai_manager.send_message(self.message, self.context)
+            except Exception as e:
+                self.error_occurred.emit(f"Response error: {str(e)}")
+                self.logger.error(f"Response error: {str(e)}")
+                return None
+        
+        # Create a task and run it to completion
+        task = loop.create_task(get_response())
+        response = loop.run_until_complete(task)
+        
+        if response:
+            self.response_received.emit(response)
+    
+    def _cleanup_loop(self, loop):
+        """Clean up event loop resources."""
+        try:
+            # Cancel any pending tasks
+            pending = asyncio.all_tasks(loop)
+            if pending:
+                for task in pending:
+                    task.cancel()
+                
+                # Run until all tasks are cancelled
+                loop.run_until_complete(
+                    asyncio.gather(*pending, return_exceptions=True)
+                )
+            
+            # Close the loop
             loop.close()
+        except Exception as e:
+            self.logger.error(f"Error during event loop cleanup: {str(e)}")
+        finally:
+            # Always reset the thread's event loop to None
+            asyncio.set_event_loop(None)
 
 
 class AIChatWidget(QtWidgets.QWidget):
@@ -252,40 +303,63 @@ How can I help you today?"""
     
     def send_message(self):
         """Send a message to the AI."""
-        message_text = self.input_field.text().strip()
-        
-        if not message_text:
+        # Get message from input
+        message = self.input_field.text().strip()
+        if not message:
             return
-        
-        if self.is_waiting_for_response:
-            self.show_status("Please wait for the current response to complete...")
-            return
-        
-        if not self.ai_manager.is_available():
-            self.show_status("AI is not available. Please check your configuration.")
-            return
-        
-        # Clear input
+            
+        # Clear input field
         self.input_field.clear()
         
-        # Add user message to chat
-        user_message = AIMessage(role="user", content=message_text)
-        self.add_message_to_chat(user_message)
-        
-        # Send to AI
-        self.send_to_ai(message_text)
-    
-    def send_to_ai(self, message: str):
-        """Send message to AI in a separate thread."""
-        self.is_waiting_for_response = True
+        # Disable UI elements during request
         self.send_button.setEnabled(False)
         self.input_field.setEnabled(False)
         self.show_status("Thinking...")
         
-        # Create worker thread
+        # Check if AI is available
+        if not self.ai_manager.is_available():
+            self.show_status("AI is not available. Please check your configuration.")
+            self.send_button.setEnabled(True)
+            self.input_field.setEnabled(True)
+            return
+        
+        # Add message to chat
+        user_message = AIMessage(role="user", content=message)
+        self.add_message_to_chat(user_message)
+        
+        # Send message to AI in a separate thread
+        self.send_to_ai(message)
+    
+    def send_to_ai(self, message: str):
+        """Send message to AI in a separate thread."""
+        # Show sending status
+        self.show_status("Sending message to AI...")
+        
+        # Stop any existing worker thread
+        if hasattr(self, 'current_worker') and self.current_worker and self.current_worker.isRunning():
+            self.logger.info("Stopping previous AI worker thread")
+            self.current_worker.quit()
+            self.current_worker.wait(1000)  # Wait up to 1 second for thread to finish
+            
+            if self.current_worker.isRunning():
+                self.logger.warning("Previous AI worker thread did not stop gracefully")
+                self.current_worker.terminate()
+            
+            # Disconnect any existing connections to avoid signal cross-talk
+            try:
+                self.current_worker.response_received.disconnect()
+                self.current_worker.error_occurred.disconnect()
+            except TypeError:
+                # Signal was not connected
+                pass
+        
+        # Create and start worker thread
         self.current_worker = AIWorker(self.ai_manager, message)
         self.current_worker.response_received.connect(self.on_ai_response)
         self.current_worker.error_occurred.connect(self.on_ai_error)
+        
+        # Start worker
+        self.is_waiting_for_response = True
         self.current_worker.start()
     
     def on_ai_response(self, response: AIResponse):

@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, AsyncGenerator
 
 from ..config.settings import AISettings
 from .models import AIMessage, AIResponse
-from .providers import OpenAIProvider, LocalProvider
+from .providers import OpenAIProvider
 
 
 
@@ -37,39 +37,55 @@ class AIManager:
                 temperature=self.settings.temperature
             )
 
-            # Local Provider (for local models)
-            self.providers['local'] = LocalProvider(
-                model_path=self.settings.local_model_path,
-                max_tokens=self.settings.max_tokens,
-                temperature=self.settings.temperature
-            )
-
             self.logger.info(f"Initialized {len(self.providers)} AI providers")
 
         except Exception as e:
             self.logger.error(f"Failed to initialize AI providers: {e}")
 
     def _set_current_provider(self):
-        """Set the current AI provider based on settings."""
+        """Set the current AI provider based on settings and availability."""
+        selected_name = None
+        # Try configured provider first if available
         if self.settings.provider in self.providers:
-            self.current_provider = self.providers[self.settings.provider]
-            self.logger.info(f"Set current AI provider to: {self.settings.provider}")
+            provider = self.providers[self.settings.provider]
+            if hasattr(provider, 'is_available') and provider.is_available():
+                selected_name = self.settings.provider
+            else:
+                self.logger.warning(
+                    f"Configured provider '{self.settings.provider}' is not available"
+                )
+
+        # Fallback to first available in preferred order
+        if not selected_name:
+            preferred_order = ['openai']
+            for name in preferred_order:
+                if name in self.providers and self.providers[name].is_available():
+                    selected_name = name
+                    break
+
+        # If still not found, pick any available provider
+        if not selected_name:
+            available = [n for n, p in self.providers.items() if p.is_available()]
+            if available:
+                selected_name = available[0]
+
+        # Finalize selection
+        if selected_name:
+            self.current_provider = self.providers[selected_name]
+            self.settings.provider = selected_name
+            self.logger.info(f"Set current AI provider to: {selected_name}")
         else:
-            self.logger.warning(f"Provider '{self.settings.provider}' not available")
-            # Fallback to first available provider
-            if self.providers:
-                provider_name = list(self.providers.keys())[0]
-                self.current_provider = self.providers[provider_name]
-                self.logger.info(f"Fallback to provider: {provider_name}")
+            self.current_provider = None
+            self.logger.warning("No available AI provider found")
 
     def is_available(self) -> bool:
         """Check if AI functionality is available."""
-        print('settings enabled', self.settings.enabled)
-        print('current provider', self.current_provider)
-        print('current provider available', self.current_provider.is_available())
-        return (self.settings.enabled and
-                self.current_provider is not None and
-                self.current_provider.is_available())
+        if not self.settings.enabled:
+            return False
+        if self.current_provider is None:
+            self.logger.warning("No current AI provider configured")
+            return False
+        return self.current_provider.is_available()
 
     def get_available_providers(self) -> List[str]:
         """Get list of available provider names."""

@@ -3,7 +3,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, List
 from PyQt5 import QtWidgets
 
 
@@ -49,6 +49,42 @@ class StyleManager:
             self.logger.error(f"Error loading style file {filename}: {e}")
             return False
     
+    def _filter_styles_by_theme(self, styles: str, theme: str) -> str:
+        """Filter a stylesheet that uses `.dark-theme`/`.light-theme` prefixes.
+
+        If the stylesheet does not contain those prefixes, the input is returned unchanged.
+        """
+        if not styles or ('.dark-theme' not in styles and '.light-theme' not in styles):
+            return styles
+
+        lines = styles.split('\n')
+        filtered: List[str] = []
+
+        if theme == 'dark':
+            in_section = False
+            for line in lines:
+                if '.dark-theme' in line:
+                    in_section = True
+                    filtered.append(line.replace('.dark-theme ', ''))
+                elif '.light-theme' in line:
+                    in_section = False
+                elif in_section:
+                    filtered.append(line)
+            return '\n'.join(filtered)
+        elif theme == 'light':
+            in_section = False
+            for line in lines:
+                if '.light-theme' in line:
+                    in_section = True
+                    filtered.append(line.replace('.light-theme ', ''))
+                elif '.dark-theme' in line:
+                    in_section = False
+                elif in_section:
+                    filtered.append(line)
+            return '\n'.join(filtered)
+
+        return ''
+
     def get_theme_styles(self, theme: str = None) -> str:
         """Get the complete theme styles."""
         if theme is None:
@@ -95,9 +131,12 @@ class StyleManager:
         
         return ""
     
-    def get_component_styles(self, component: str) -> str:
-        """Get styles for a specific component."""
-        return self.loaded_styles.get(component, '')
+    def get_component_styles(self, component: str, theme: Optional[str] = None) -> str:
+        """Get styles for a specific component, filtered by theme if applicable."""
+        styles = self.loaded_styles.get(component, '')
+        if theme is None:
+            theme = self.current_theme
+        return self._filter_styles_by_theme(styles, theme)
     
     def get_combined_styles(self, theme: str = None, components: list = None) -> str:
         """Get combined styles for theme and specified components."""
@@ -114,9 +153,9 @@ class StyleManager:
         if theme_styles:
             styles.append(theme_styles)
         
-        # Add component styles
+        # Add component styles (theme-filtered)
         for component in components:
-            component_styles = self.get_component_styles(component)
+            component_styles = self.get_component_styles(component, theme)
             if component_styles:
                 styles.append(component_styles)
         

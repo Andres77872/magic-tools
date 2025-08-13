@@ -28,6 +28,7 @@ class AIConfigSection(QtWidgets.QGroupBox):
         self.provider_combo = QtWidgets.QComboBox()
         self.provider_combo.addItems(["openai", "local"])
         self.provider_combo.setCurrentText(self.ai_settings.provider)
+        self.provider_combo.setToolTip("Select the AI provider backend.")
         layout.addRow("Provider:", self.provider_combo)
         
         # API Key
@@ -35,7 +36,7 @@ class AIConfigSection(QtWidgets.QGroupBox):
         self.api_key_edit.setText(self.ai_settings.api_key)
         self.api_key_edit.setEchoMode(QtWidgets.QLineEdit.Password)
         self.api_key_edit.setPlaceholderText("Enter your API key...")
-        layout.addRow("API Key:", self.api_key_edit)
+        self.api_key_edit.setToolTip("API key for the selected provider. Click 'Show' to reveal.")
         
         # Show/Hide API Key button
         self.toggle_key_btn = QtWidgets.QPushButton("Show")
@@ -51,18 +52,21 @@ class AIConfigSection(QtWidgets.QGroupBox):
         self.base_url_edit = QtWidgets.QLineEdit()
         self.base_url_edit.setText(self.ai_settings.base_url)
         self.base_url_edit.setPlaceholderText("https://api.openai.com/v1")
+        self.base_url_edit.setToolTip("Base URL for the API endpoints.")
         layout.addRow("Base URL:", self.base_url_edit)
         
         # Model
         self.model_edit = QtWidgets.QLineEdit()
         self.model_edit.setText(self.ai_settings.model)
         self.model_edit.setPlaceholderText("gpt-4-1106-preview")
+        self.model_edit.setToolTip("Model identifier, e.g. 'gpt-4-1106-preview'.")
         layout.addRow("Model:", self.model_edit)
         
         # Max Tokens
         self.max_tokens_spin = QtWidgets.QSpinBox()
         self.max_tokens_spin.setRange(1, 8000)
         self.max_tokens_spin.setValue(self.ai_settings.max_tokens)
+        self.max_tokens_spin.setToolTip("Maximum tokens for responses.")
         layout.addRow("Max Tokens:", self.max_tokens_spin)
         
         # Temperature
@@ -70,17 +74,20 @@ class AIConfigSection(QtWidgets.QGroupBox):
         self.temperature_spin.setRange(0.0, 2.0)
         self.temperature_spin.setSingleStep(0.1)
         self.temperature_spin.setValue(self.ai_settings.temperature)
+        self.temperature_spin.setToolTip("Creativity of responses (0.0 = deterministic, 2.0 = very creative).")
         layout.addRow("Temperature:", self.temperature_spin)
         
         # Enabled checkbox
         self.enabled_check = QtWidgets.QCheckBox("Enable AI Integration")
         self.enabled_check.setChecked(self.ai_settings.enabled)
+        self.enabled_check.setToolTip("Toggle to enable or disable AI features globally.")
         layout.addRow("", self.enabled_check)
         
         # Local model path (for local provider)
         self.local_model_edit = QtWidgets.QLineEdit()
         self.local_model_edit.setText(self.ai_settings.local_model_path)
         self.local_model_edit.setPlaceholderText("Path to local model file...")
+        self.local_model_edit.setToolTip("Path to a local model file (used when provider is 'local').")
         
         self.browse_btn = QtWidgets.QPushButton("Browse")
         self.browse_btn.setFixedSize(60, 25)
@@ -93,7 +100,10 @@ class AIConfigSection(QtWidgets.QGroupBox):
         
         # Connect provider change to update UI
         self.provider_combo.currentTextChanged.connect(self.on_provider_changed)
+        self.enabled_check.toggled.connect(self.update_enabled_state)
+        # Initialize enabled state and provider-specific fields
         self.on_provider_changed(self.provider_combo.currentText())
+        self.update_enabled_state()
     
     def toggle_api_key_visibility(self):
         """Toggle API key visibility."""
@@ -122,13 +132,23 @@ class AIConfigSection(QtWidgets.QGroupBox):
         is_local = provider == "local"
         
         # API key and base URL only for OpenAI
-        self.api_key_edit.setEnabled(is_openai)
-        self.toggle_key_btn.setEnabled(is_openai)
-        self.base_url_edit.setEnabled(is_openai)
+        self.api_key_edit.setEnabled(is_openai and self.enabled_check.isChecked())
+        self.toggle_key_btn.setEnabled(is_openai and self.enabled_check.isChecked())
+        self.base_url_edit.setEnabled(is_openai and self.enabled_check.isChecked())
         
         # Local model path only for local
-        self.local_model_edit.setEnabled(is_local)
-        self.browse_btn.setEnabled(is_local)
+        self.local_model_edit.setEnabled(is_local and self.enabled_check.isChecked())
+        self.browse_btn.setEnabled(is_local and self.enabled_check.isChecked())
+
+        # Common fields depend on enabled state
+        enabled = self.enabled_check.isChecked()
+        self.model_edit.setEnabled(enabled)
+        self.max_tokens_spin.setEnabled(enabled)
+        self.temperature_spin.setEnabled(enabled)
+
+    def update_enabled_state(self):
+        """Enable/disable AI controls based on the master toggle."""
+        self.on_provider_changed(self.provider_combo.currentText())
     
     def get_settings(self) -> AISettings:
         """Get the current AI settings from the form."""
@@ -175,7 +195,7 @@ class HotkeyConfigSection(QtWidgets.QGroupBox):
             "Supported modifiers: Ctrl, Alt, Shift, Meta"
         )
         help_label.setWordWrap(True)
-        help_label.setStyleSheet("color: #888888; font-size: 10px;")
+        help_label.setProperty("class", "config-help-text")
         layout.addRow("", help_label)
     
     def create_shortcut_edit(self, current_shortcut: str) -> QtWidgets.QLineEdit:
@@ -183,6 +203,7 @@ class HotkeyConfigSection(QtWidgets.QGroupBox):
         edit = QtWidgets.QLineEdit()
         edit.setText(current_shortcut)
         edit.setPlaceholderText("Click and press keys...")
+        edit.setToolTip("Click the field and press the desired key combination.")
         
         # Make it capture key sequences
         edit.installEventFilter(self)
@@ -269,6 +290,7 @@ class UIConfigSection(QtWidgets.QGroupBox):
         self.theme_combo = QtWidgets.QComboBox()
         self.theme_combo.addItems(["dark", "light"])
         self.theme_combo.setCurrentText(self.ui_settings.theme)
+        self.theme_combo.setToolTip("Choose the application theme.")
         layout.addRow("Theme:", self.theme_combo)
         
         # Window size
@@ -277,6 +299,8 @@ class UIConfigSection(QtWidgets.QGroupBox):
         self.width_spin = QtWidgets.QSpinBox()
         self.width_spin.setRange(400, 1200)
         self.width_spin.setValue(self.ui_settings.window_width)
+        self.width_spin.setSuffix(" px")
+        self.width_spin.setToolTip("Window width in pixels.")
         size_layout.addWidget(self.width_spin)
         
         size_layout.addWidget(QtWidgets.QLabel("×"))
@@ -284,6 +308,8 @@ class UIConfigSection(QtWidgets.QGroupBox):
         self.height_spin = QtWidgets.QSpinBox()
         self.height_spin.setRange(300, 800)
         self.height_spin.setValue(self.ui_settings.window_height)
+        self.height_spin.setSuffix(" px")
+        self.height_spin.setToolTip("Window height in pixels.")
         size_layout.addWidget(self.height_spin)
         
         layout.addRow("Window Size:", size_layout)
@@ -293,21 +319,26 @@ class UIConfigSection(QtWidgets.QGroupBox):
         self.opacity_spin.setRange(0.3, 1.0)
         self.opacity_spin.setSingleStep(0.1)
         self.opacity_spin.setValue(self.ui_settings.opacity)
+        self.opacity_spin.setDecimals(2)
+        self.opacity_spin.setToolTip("Window opacity (0.30 to 1.00).")
         layout.addRow("Opacity:", self.opacity_spin)
         
         # Always on top
         self.always_on_top_check = QtWidgets.QCheckBox("Keep window always on top")
         self.always_on_top_check.setChecked(self.ui_settings.always_on_top)
+        self.always_on_top_check.setToolTip("If enabled, the window will stay above others.")
         layout.addRow("", self.always_on_top_check)
         
         # Show on startup
         self.show_on_startup_check = QtWidgets.QCheckBox("Show window on startup")
         self.show_on_startup_check.setChecked(self.ui_settings.show_on_startup)
+        self.show_on_startup_check.setToolTip("Open the launcher automatically when the app starts.")
         layout.addRow("", self.show_on_startup_check)
         
         # Animation enabled
         self.animation_check = QtWidgets.QCheckBox("Enable animations")
         self.animation_check.setChecked(self.ui_settings.animation_enabled)
+        self.animation_check.setToolTip("Enable subtle UI animations.")
         layout.addRow("", self.animation_check)
     
     def get_settings(self) -> UISettings:
@@ -409,6 +440,8 @@ class ConfigWidget(QtWidgets.QWidget):
         # UI Configuration Section
         self.ui_section = UIConfigSection(self.settings.ui)
         settings_layout.addWidget(self.ui_section)
+        # Live theme preview: update styles immediately when theme changes
+        self.ui_section.theme_combo.currentTextChanged.connect(self.on_theme_combo_changed)
         
         settings_layout.addStretch()
         
@@ -445,6 +478,14 @@ class ConfigWidget(QtWidgets.QWidget):
     def apply_styles(self):
         """Apply styles using the StyleManager."""
         self.style_manager.apply_styles_to_widget(self, components=['config'])
+
+    def on_theme_combo_changed(self, theme: str):
+        """Handle live theme switching from the UI section."""
+        try:
+            self.style_manager.set_theme(theme)
+            self.apply_styles()
+        except Exception as e:
+            self.logger.error(f"Failed to apply theme '{theme}': {e}")
     
     def reset_to_defaults(self):
         """Reset all settings to defaults."""
@@ -506,6 +547,25 @@ class ConfigWidget(QtWidgets.QWidget):
                 ui=self.ui_section.get_settings(),
                 tools=self.settings.tools  # Keep existing tool settings
             )
+            # Basic validation for AI settings when enabled
+            ai_settings = new_settings.ai
+            if ai_settings.enabled:
+                if ai_settings.provider == "openai":
+                    if not ai_settings.api_key.strip():
+                        QtWidgets.QMessageBox.warning(
+                            self,
+                            "Validation Error",
+                            "API Key is required when using the OpenAI provider."
+                        )
+                        return
+                elif ai_settings.provider == "local":
+                    if not ai_settings.local_model_path.strip():
+                        QtWidgets.QMessageBox.warning(
+                            self,
+                            "Validation Error",
+                            "Local model path is required when using the Local provider."
+                        )
+                        return
             
             # Save to config manager
             self.config_manager.settings = new_settings

@@ -1,57 +1,65 @@
-/* Configuration Widget Styles */
+/* Configuration Widget Styles (Dark and Light variants) */
+/* stylelint-disable property-no-unknown */
 
-/* Header Styles */
-QPushButton[class="config-back-button"] {
-    background-color: rgba(100, 100, 100, 150);
-    border: 1px solid #666666;
-    border-radius: 4px;
-    color: #ffffff;
+/* ===================== */
+/* Dark Theme Component  */
+/* ===================== */
+.dark-theme QPushButton[class="config-back-button"] {
+    background-color: #404040;
+    border: 1px solid #606060;
+    border-radius: 6px;
+    color: #e8e8e8;
     font-size: 11px;
+    font-weight: 500;
 }
 
-QPushButton[class="config-back-button"]:hover {
-    background-color: rgba(120, 120, 120, 150);
-}
-
-QLabel[class="config-title"] {
-    font-size: 18px;
-    font-weight: bold;
-    color: #ffffff;
-}
-
-/* Group Box Styles */
-QGroupBox {
-    font-weight: bold;
-    border: 2px solid #555555;
-    border-radius: 8px;
-    margin-top: 10px;
-    padding-top: 10px;
-    color: #ffffff;
-}
-
-QGroupBox::title {
-    subcontrol-origin: margin;
-    left: 10px;
-    padding: 0 8px 0 8px;
-    color: #ffffff;
-    background-color: rgba(30, 30, 30, 240);
-}
-
-/* Form Controls */
-QComboBox {
-    background-color: rgba(50, 50, 50, 200);
-    border: 1px solid #555555;
-    border-radius: 4px;
-    padding: 4px 8px;
-    color: #ffffff;
-    min-width: 120px;
-}
-
-QComboBox:hover {
+.dark-theme QPushButton[class="config-back-button"]:hover {
+    background-color: #4a4a4a;
     border-color: #007acc;
 }
 
-QComboBox::drop-down {
+.dark-theme QLabel[class="config-title"] {
+    font-size: 20px;
+    font-weight: 600;
+    color: #f0f0f0;
+    letter-spacing: 0.5px;
+}
+
+.dark-theme QGroupBox {
+    font-weight: 600;
+    border: 2px solid #4a4a4a;
+    border-radius: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    color: #e8e8e8;
+    background-color: rgba(35, 35, 35, 0.6);
+}
+
+.dark-theme QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 10px 0 10px;
+    color: #f0f0f0;
+    background-color: #2a2a2a;
+    border-radius: 4px;
+}
+
+.dark-theme QComboBox {
+    background-color: #3a3a3a;
+    border: 1px solid #5a5a5a;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #f0f0f0;
+    min-width: 120px;
+    selection-background-color: #007acc;
+}
+
+.dark-theme QComboBox:hover {
+    border-color: #007acc;
+    background-color: #404040;
+}
+
+.dark-theme QComboBox::drop-down {
     subcontrol-origin: padding;
     subcontrol-position: top right;
     width: 20px;
@@ -62,7 +70,7 @@ QComboBox::drop-down {
     border-bottom-right-radius: 4px;
 }
 
-QComboBox::down-arrow {
+.dark-theme QComboBox::down-arrow {
     image: none;
     border-left: 4px solid transparent;
     border-right: 4px solid transparent;
@@ -70,27 +78,35 @@ QComboBox::down-arrow {
     margin: 2px;
 }
 
-QComboBox QAbstractItemView {
-    background-color: rgba(50, 50, 50, 240);
-    border: 1px solid #555555;
-    color: #ffffff;
-    selection-background-color: rgba(0, 122, 204, 150);
+.dark-theme QComboBox QAbstractItemView {
+    background-color: #3a3a3a;
+    border: 1px solid #5a5a5a;
+    color: #f0f0f0;
+    selection-background-color: #007acc;
+    outline: none;
 }
 
-QSpinBox, QDoubleSpinBox {
-    background-color: rgba(50, 50, 50, 200);
-    border: 1px solid #555555;
-    border-radius: 4px;
-    padding: 4px 8px;
+.dark-theme QComboBox QAbstractItemView::item:selected {
+    background-color: #007acc;
     color: #ffffff;
+}
+
+.dark-theme QSpinBox, .dark-theme QDoubleSpinBox {
+    background-color: #3a3a3a;
+    border: 1px solid #5a5a5a;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #f0f0f0;
     min-width: 80px;
+    selection-background-color: #007acc;
 }
 
-QSpinBox:hover, QDoubleSpinBox:hover {
+.dark-theme QSpinBox:hover, .dark-theme QDoubleSpinBox:hover {
     border-color: #007acc;
+    background-color: #404040;
 }
 
-QSpinBox::up-button, QDoubleSpinBox::up-button {
+.dark-theme QSpinBox::up-button, .dark-theme QDoubleSpinBox::up-button {
     subcontrol-origin: border;
     subcontrol-position: top right;
     width: 16px;
@@ -100,7 +116,7 @@ QSpinBox::up-button, QDoubleSpinBox::up-button {
     border-top-right-radius: 4px;
 }
 
-QSpinBox::down-button, QDoubleSpinBox::down-button {
+.dark-theme QSpinBox::down-button, .dark-theme QDoubleSpinBox::down-button {
     subcontrol-origin: border;
     subcontrol-position: bottom right;
     width: 16px;
@@ -110,7 +126,7 @@ QSpinBox::down-button, QDoubleSpinBox::down-button {
     border-bottom-right-radius: 4px;
 }
 
-QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
+.dark-theme QSpinBox::up-arrow, .dark-theme QDoubleSpinBox::up-arrow {
     image: none;
     border-left: 3px solid transparent;
     border-right: 3px solid transparent;
@@ -118,7 +134,7 @@ QSpinBox::up-arrow, QDoubleSpinBox::up-arrow {
     margin: 2px;
 }
 
-QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
+.dark-theme QSpinBox::down-arrow, .dark-theme QDoubleSpinBox::down-arrow {
     image: none;
     border-left: 3px solid transparent;
     border-right: 3px solid transparent;
@@ -126,35 +142,283 @@ QSpinBox::down-arrow, QDoubleSpinBox::down-arrow {
     margin: 2px;
 }
 
-QCheckBox {
+.dark-theme QCheckBox {
+    color: #f0f0f0;
+    padding-left: 8px;
+    font-weight: 400;
+}
+
+.dark-theme QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #5a5a5a;
+    border-radius: 4px;
+    background-color: #3a3a3a;
+}
+
+.dark-theme QCheckBox::indicator:checked {
+    background-color: #007acc;
+    border-color: #0066aa;
+}
+
+.dark-theme QCheckBox::indicator:checked:hover {
+    background-color: #0088dd;
+    border-color: #005588;
+}
+
+.dark-theme QCheckBox::indicator:hover {
+    border-color: #007acc;
+    background-color: #404040;
+}
+
+.dark-theme QPushButton[class="config-save-button"] {
+    background-color: #28a745;
+    border: 1px solid #1e7e34;
+    border-radius: 6px;
     color: #ffffff;
-    spacing: 8px;
+    font-weight: 600;
+    padding: 10px 18px;
+    min-width: 70px;
+    font-size: 13px;
 }
 
-QCheckBox::indicator {
+.dark-theme QPushButton[class="config-save-button"]:hover {
+    background-color: #218838;
+    border-color: #1c7430;
+    transform: translateY(-1px);
+}
+
+.dark-theme QPushButton[class="config-cancel-button"] {
+    background-color: #6c757d;
+    border: 1px solid #545b62;
+    border-radius: 6px;
+    color: #ffffff;
+    font-weight: 500;
+    padding: 10px 18px;
+    min-width: 70px;
+    font-size: 13px;
+}
+
+.dark-theme QPushButton[class="config-cancel-button"]:hover {
+    background-color: #5a6268;
+    border-color: #464a4e;
+    transform: translateY(-1px);
+}
+
+.dark-theme QPushButton[class="config-reset-button"] {
+    background-color: #dc3545;
+    border: 1px solid #bd2130;
+    border-radius: 6px;
+    color: #ffffff;
+    font-weight: 500;
+    padding: 10px 18px;
+    min-width: 110px;
+    font-size: 13px;
+}
+
+.dark-theme QPushButton[class="config-reset-button"]:hover {
+    background-color: #c82333;
+    border-color: #a71e2a;
+    transform: translateY(-1px);
+}
+
+/* While Qt doesn't support styling layouts, keep this for potential future property usage */
+.dark-theme QFormLayout QLabel {
+    color: #cccccc;
+    font-weight: normal;
+    margin-bottom: 4px;
+}
+
+.dark-theme QLineEdit:disabled, .dark-theme QComboBox:disabled, .dark-theme QSpinBox:disabled, .dark-theme QDoubleSpinBox:disabled {
+    background-color: rgba(40, 40, 40, 100);
+    color: #666666;
+    border-color: #444444;
+}
+
+.dark-theme QPushButton:disabled {
+    background-color: rgba(40, 40, 40, 100);
+    color: #666666;
+    border-color: #444444;
+}
+
+/* Help text under Hotkey section */
+.dark-theme QLabel[class="config-help-text"] {
+    color: #cccccc;
+    font-size: 10px;
+}
+
+/* ===================== */
+/* Light Theme Component */
+/* ===================== */
+.light-theme QPushButton[class="config-back-button"] {
+    background-color: #f8f9fa;
+    border: 1px solid #adb5bd;
+    border-radius: 6px;
+    color: #495057;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.light-theme QPushButton[class="config-back-button"]:hover {
+    background-color: #e9ecef;
+    border-color: #007acc;
+}
+
+.light-theme QLabel[class="config-title"] {
+    font-size: 20px;
+    font-weight: 600;
+    color: #212529;
+    letter-spacing: 0.5px;
+}
+
+.light-theme QGroupBox {
+    font-weight: 600;
+    border: 2px solid #bbb;
+    border-radius: 10px;
+    margin-top: 12px;
+    padding-top: 12px;
+    color: #495057;
+    background-color: rgba(248, 249, 250, 0.7);
+}
+
+.light-theme QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 10px;
+    padding: 0 10px 0 10px;
+    color: #212529;
+    background-color: #ffffff;
+    border-radius: 4px;
+}
+
+.light-theme QComboBox {
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #495057;
+    min-width: 120px;
+    selection-background-color: #007acc;
+}
+
+.light-theme QComboBox:hover {
+    border-color: #007acc;
+    background-color: #f8f9fa;
+}
+
+.light-theme QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 20px;
+    border-left-width: 1px;
+    border-left-color: #cccccc;
+    border-left-style: solid;
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.light-theme QComboBox::down-arrow {
+    image: none;
+    border-left: 4px solid transparent;
+    border-right: 4px solid transparent;
+    border-top: 4px solid #333333;
+    margin: 2px;
+}
+
+.light-theme QComboBox QAbstractItemView {
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    color: #495057;
+    selection-background-color: #007acc;
+    outline: none;
+}
+
+.light-theme QComboBox QAbstractItemView::item:selected {
+    background-color: #007acc;
+    color: #ffffff;
+}
+
+.light-theme QSpinBox, .light-theme QDoubleSpinBox {
+    background-color: #ffffff;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 6px 10px;
+    color: #495057;
+    min-width: 80px;
+    selection-background-color: #007acc;
+}
+
+.light-theme QSpinBox:hover, .light-theme QDoubleSpinBox:hover {
+    border-color: #007acc;
+    background-color: #f8f9fa;
+}
+
+.light-theme QSpinBox::up-button, .light-theme QDoubleSpinBox::up-button {
+    subcontrol-origin: border;
+    subcontrol-position: top right;
     width: 16px;
-    height: 16px;
-    border: 1px solid #555555;
-    border-radius: 3px;
-    background-color: rgba(50, 50, 50, 200);
+    border-left-width: 1px;
+    border-left-color: #cccccc;
+    border-left-style: solid;
+    border-top-right-radius: 4px;
 }
 
-QCheckBox::indicator:checked {
-    background-color: rgba(0, 122, 204, 200);
+.light-theme QSpinBox::down-button, .light-theme QDoubleSpinBox::down-button {
+    subcontrol-origin: border;
+    subcontrol-position: bottom right;
+    width: 16px;
+    border-left-width: 1px;
+    border-left-color: #cccccc;
+    border-left-style: solid;
+    border-bottom-right-radius: 4px;
+}
+
+.light-theme QSpinBox::up-arrow, .light-theme QDoubleSpinBox::up-arrow {
+    image: none;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-bottom: 3px solid #333333;
+    margin: 2px;
+}
+
+.light-theme QSpinBox::down-arrow, .light-theme QDoubleSpinBox::down-arrow {
+    image: none;
+    border-left: 3px solid transparent;
+    border-right: 3px solid transparent;
+    border-top: 3px solid #333333;
+    margin: 2px;
+}
+
+.light-theme QCheckBox {
+    color: #495057;
+    padding-left: 8px;
+    font-weight: 400;
+}
+
+.light-theme QCheckBox::indicator {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #ced4da;
+    border-radius: 4px;
+    background-color: #ffffff;
+}
+
+.light-theme QCheckBox::indicator:checked {
+    background-color: #007acc;
+    border-color: #0056b3;
+}
+
+.light-theme QCheckBox::indicator:checked:hover {
+    background-color: #0056b3;
+    border-color: #004085;
+}
+
+.light-theme QCheckBox::indicator:hover {
     border-color: #007acc;
+    background-color: #f8f9fa;
 }
 
-QCheckBox::indicator:checked:hover {
-    background-color: rgba(0, 122, 204, 230);
-}
-
-QCheckBox::indicator:hover {
-    border-color: #007acc;
-}
-
-/* Button Styles */
-QPushButton[class="config-save-button"] {
-    background-color: rgba(0, 150, 0, 150);
+.light-theme QPushButton[class="config-save-button"] {
+    background-color: rgba(0, 150, 0, 160);
     border: 1px solid #00aa00;
     border-radius: 4px;
     color: #ffffff;
@@ -163,25 +427,25 @@ QPushButton[class="config-save-button"] {
     min-width: 60px;
 }
 
-QPushButton[class="config-save-button"]:hover {
+.light-theme QPushButton[class="config-save-button"]:hover {
     background-color: rgba(0, 150, 0, 200);
 }
 
-QPushButton[class="config-cancel-button"] {
-    background-color: rgba(100, 100, 100, 150);
-    border: 1px solid #666666;
+.light-theme QPushButton[class="config-cancel-button"] {
+    background-color: rgba(240, 240, 240, 200);
+    border: 1px solid #cccccc;
     border-radius: 4px;
-    color: #ffffff;
+    color: #333333;
     padding: 8px 16px;
     min-width: 60px;
 }
 
-QPushButton[class="config-cancel-button"]:hover {
-    background-color: rgba(120, 120, 120, 150);
+.light-theme QPushButton[class="config-cancel-button"]:hover {
+    background-color: rgba(230, 230, 230, 200);
 }
 
-QPushButton[class="config-reset-button"] {
-    background-color: rgba(150, 50, 50, 150);
+.light-theme QPushButton[class="config-reset-button"] {
+    background-color: rgba(200, 70, 70, 160);
     border: 1px solid #cc4444;
     border-radius: 4px;
     color: #ffffff;
@@ -189,26 +453,31 @@ QPushButton[class="config-reset-button"] {
     min-width: 100px;
 }
 
-QPushButton[class="config-reset-button"]:hover {
-    background-color: rgba(150, 50, 50, 200);
+.light-theme QPushButton[class="config-reset-button"]:hover {
+    background-color: rgba(200, 70, 70, 200);
 }
 
-/* Form Layout Styling */
-QFormLayout QLabel {
-    color: #cccccc;
+/* While Qt doesn't support styling layouts, keep this for potential future property usage */
+.light-theme QFormLayout QLabel {
+    color: #666666;
     font-weight: normal;
     margin-bottom: 4px;
 }
 
-/* Disabled Controls */
-QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDoubleSpinBox:disabled {
-    background-color: rgba(40, 40, 40, 100);
-    color: #666666;
-    border-color: #444444;
+.light-theme QLineEdit:disabled, .light-theme QComboBox:disabled, .light-theme QSpinBox:disabled, .light-theme QDoubleSpinBox:disabled {
+    background-color: rgba(245, 245, 245, 180);
+    color: #999999;
+    border-color: #dddddd;
 }
 
-QPushButton:disabled {
-    background-color: rgba(40, 40, 40, 100);
+.light-theme QPushButton:disabled {
+    background-color: rgba(245, 245, 245, 180);
+    color: #999999;
+    border-color: #dddddd;
+}
+
+/* Help text under Hotkey section */
+.light-theme QLabel[class="config-help-text"] {
     color: #666666;
-    border-color: #444444;
-} 
+    font-size: 10px;
+}

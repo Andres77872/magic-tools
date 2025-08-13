@@ -1,7 +1,10 @@
 /* AI Chat Widget Styles */
 
+/* ===================== */
+/* Dark Theme Component  */
+/* ===================== */
 /* Message Bubble Styles */
-QLabel[class="message-bubble-user"] {
+.dark-theme QLabel[class="message-bubble-user"] {
     background-color: rgba(0, 122, 204, 150);
     border-radius: 12px;
     padding: 8px 12px;
@@ -9,7 +12,7 @@ QLabel[class="message-bubble-user"] {
     color: #ffffff;
 }
 
-QLabel[class="message-bubble-assistant"] {
+.dark-theme QLabel[class="message-bubble-assistant"] {
     background-color: rgba(100, 100, 100, 150);
     border-radius: 12px;
     padding: 8px 12px;
@@ -18,7 +21,7 @@ QLabel[class="message-bubble-assistant"] {
 }
 
 /* Chat Header Styles */
-QPushButton[class="chat-back-button"] {
+.dark-theme QPushButton[class="chat-back-button"] {
     background-color: rgba(100, 100, 100, 150);
     border: 1px solid #666666;
     border-radius: 4px;
@@ -26,23 +29,23 @@ QPushButton[class="chat-back-button"] {
     font-size: 11px;
 }
 
-QPushButton[class="chat-back-button"]:hover {
+.dark-theme QPushButton[class="chat-back-button"]:hover {
     background-color: rgba(120, 120, 120, 150);
 }
 
-QLabel[class="chat-title"] {
+.dark-theme QLabel[class="chat-title"] {
     font-size: 16px;
     font-weight: bold;
     color: #ffffff;
 }
 
-QLabel[class="chat-ai-status"] {
+.dark-theme QLabel[class="chat-ai-status"] {
     font-size: 11px;
     color: #cccccc;
 }
 
 /* Chat Input Styles */
-QPushButton[class="chat-send-button"] {
+.dark-theme QPushButton[class="chat-send-button"] {
     background-color: rgba(0, 122, 204, 150);
     border: 1px solid #007acc;
     border-radius: 4px;
@@ -50,23 +53,23 @@ QPushButton[class="chat-send-button"] {
     font-weight: bold;
 }
 
-QPushButton[class="chat-send-button"]:hover {
+.dark-theme QPushButton[class="chat-send-button"]:hover {
     background-color: rgba(0, 122, 204, 200);
 }
 
-QPushButton[class="chat-send-button"]:disabled {
+.dark-theme QPushButton[class="chat-send-button"]:disabled {
     background-color: rgba(100, 100, 100, 100);
     border-color: #666666;
     color: #999999;
 }
 
 /* Chat Status Styles */
-QLabel[class="chat-status-label"] {
+.dark-theme QLabel[class="chat-status-label"] {
     font-size: 10px;
     color: #999999;
 }
 
-QPushButton[class="chat-clear-button"] {
+.dark-theme QPushButton[class="chat-clear-button"] {
     background-color: rgba(150, 50, 50, 150);
     border: 1px solid #cc4444;
     border-radius: 4px;
@@ -74,6 +77,87 @@ QPushButton[class="chat-clear-button"] {
     font-size: 10px;
 }
 
-QPushButton[class="chat-clear-button"]:hover {
+.dark-theme QPushButton[class="chat-clear-button"]:hover {
     background-color: rgba(150, 50, 50, 200);
-} 
+}
+
+/* ===================== */
+/* Light Theme Component */
+/* ===================== */
+/* Message Bubble Styles */
+.light-theme QLabel[class="message-bubble-user"] {
+    background-color: rgba(0, 122, 204, 160);
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-left: 50px;
+    color: #ffffff;
+}
+
+.light-theme QLabel[class="message-bubble-assistant"] {
+    background-color: rgba(230, 230, 230, 220);
+    border-radius: 12px;
+    padding: 8px 12px;
+    margin-right: 50px;
+    color: #333333;
+}
+
+/* Chat Header Styles */
+.light-theme QPushButton[class="chat-back-button"] {
+    background-color: rgba(240, 240, 240, 200);
+    border: 1px solid #cccccc;
+    border-radius: 4px;
+    color: #333333;
+    font-size: 11px;
+}
+
+.light-theme QPushButton[class="chat-back-button"]:hover {
+    background-color: rgba(230, 230, 230, 200);
+}
+
+.light-theme QLabel[class="chat-title"] {
+    font-size: 16px;
+    font-weight: bold;
+    color: #333333;
+}
+
+.light-theme QLabel[class="chat-ai-status"] {
+    font-size: 11px;
+    color: #666666;
+}
+
+/* Chat Input Styles */
+.light-theme QPushButton[class="chat-send-button"] {
+    background-color: rgba(0, 122, 204, 140);
+    border: 1px solid #007acc;
+    border-radius: 4px;
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.light-theme QPushButton[class="chat-send-button"]:hover {
+    background-color: rgba(0, 122, 204, 180);
+}
+
+.light-theme QPushButton[class="chat-send-button"]:disabled {
+    background-color: rgba(200, 200, 200, 150);
+    border-color: #cccccc;
+    color: #999999;
+}
+
+/* Chat Status Styles */
+.light-theme QLabel[class="chat-status-label"] {
+    font-size: 10px;
+    color: #666666;
+}
+
+.light-theme QPushButton[class="chat-clear-button"] {
+    background-color: rgba(200, 60, 60, 160);
+    border: 1px solid #cc6666;
+    border-radius: 4px;
+    color: #ffffff;
+    font-size: 10px;
+}
+
+.light-theme QPushButton[class="chat-clear-button"]:hover {
+    background-color: rgba(200, 60, 60, 200);
+}

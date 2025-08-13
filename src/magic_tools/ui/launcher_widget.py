@@ -17,8 +17,9 @@ class ToolButton(QtWidgets.QPushButton):
     
     tool_clicked = pyqtSignal(str)  # Emits tool name
     
-    def __init__(self, tool_info: ToolInfo, parent=None):
+    def __init__(self, tool_key: str, tool_info: ToolInfo, parent=None):
         super().__init__(parent)
+        self.tool_key = tool_key
         self.tool_info = tool_info
         self.setup_ui()
     
@@ -29,8 +30,15 @@ class ToolButton(QtWidgets.QPushButton):
         self.setFixedSize(120, 80)
         self.setObjectName("toolButton")
         
+        # Apply icon if available
+        if self.tool_info.icon:
+            icon = QtGui.QIcon(self.tool_info.icon)
+            if not icon.isNull():
+                self.setIcon(icon)
+                self.setIconSize(QtCore.QSize(24, 24))
+        
         # Connect click signal
-        self.clicked.connect(lambda: self.tool_clicked.emit(self.tool_info.name.lower().replace(" ", "_")))
+        self.clicked.connect(lambda: self.tool_clicked.emit(self.tool_key))
         
         # Apply CSS class
         self.setProperty("class", "tool-button")
@@ -52,6 +60,7 @@ class SearchLineEdit(QtWidgets.QLineEdit):
         self.setPlaceholderText("Search tools or ask AI... (Type '/' for AI)")
         self.textChanged.connect(self.on_text_changed)
         self.returnPressed.connect(self.on_return_pressed)
+        self.setClearButtonEnabled(True)
         
         # Add search icon
         self.search_action = self.addAction(
@@ -106,6 +115,7 @@ class LauncherWidget(QtWidgets.QWidget):
         # Tool widgets
         self.tool_buttons = {}
         self.visible_tools = []
+        self.cols_per_row = 4
         
         # Setup UI
         self.setup_ui()
@@ -175,6 +185,12 @@ class LauncherWidget(QtWidgets.QWidget):
         self.tool_grid_layout = QtWidgets.QGridLayout(self.tool_grid_widget)
         self.tool_grid_layout.setSpacing(10)
         
+        # Empty state label
+        self.empty_state_label = QtWidgets.QLabel("No tools found. Try different keywords.")
+        self.empty_state_label.setAlignment(Qt.AlignCenter)
+        self.empty_state_label.setProperty("class", "launcher-empty-state")
+        self.empty_state_label.hide()
+        
         self.scroll_area.setWidget(self.tool_grid_widget)
         self.main_layout.addWidget(self.scroll_area)
     
@@ -219,27 +235,60 @@ class LauncherWidget(QtWidgets.QWidget):
         all_tools = self.tool_manager.get_all_tool_info()
         
         # Create buttons for each tool
-        row, col = 0, 0
-        cols_per_row = 4
-        
         for tool_name, tool_info in all_tools.items():
             if tool_name in self.tool_manager.settings.enabled_tools:
-                button = ToolButton(tool_info)
+                button = ToolButton(tool_name, tool_info)
                 button.tool_clicked.connect(self.on_tool_clicked)
-                
                 self.tool_buttons[tool_name] = button
-                self.tool_grid_layout.addWidget(button, row, col)
-                
-                col += 1
-                if col >= cols_per_row:
-                    col = 0
-                    row += 1
-        
-        # Update tool count
-        self.update_tool_count()
         
         # Update visible tools list
         self.visible_tools = list(self.tool_buttons.keys())
+        
+        # Layout buttons and update count
+        self.layout_tool_buttons()
+        self.update_tool_count()
+
+    def layout_tool_buttons(self):
+        """Arrange tool buttons responsively based on available width."""
+        # Compute columns based on viewport width and button size
+        viewport_width = self.scroll_area.viewport().width()
+        spacing = self.tool_grid_layout.horizontalSpacing()
+        if spacing is None or spacing < 0:
+            spacing = 10
+        margins = self.tool_grid_layout.contentsMargins()
+        available_width = max(0, viewport_width - (margins.left() + margins.right()))
+        button_width = 120
+        denom = button_width + spacing
+        cols = max(1, (available_width // denom) if denom > 0 else 1)
+        if cols != self.cols_per_row:
+            self.cols_per_row = int(cols)
+        
+        # Clear existing layout items
+        while self.tool_grid_layout.count():
+            item = self.tool_grid_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.setParent(None)
+        
+        # Empty state
+        if not self.visible_tools:
+            self.empty_state_label.show()
+            self.tool_grid_layout.addWidget(self.empty_state_label, 0, 0, 1, self.cols_per_row)
+            return
+        else:
+            self.empty_state_label.hide()
+        
+        # Add visible buttons
+        row, col = 0, 0
+        for tool_name in self.visible_tools:
+            button = self.tool_buttons.get(tool_name)
+            if not button:
+                continue
+            self.tool_grid_layout.addWidget(button, row, col)
+            col += 1
+            if col >= self.cols_per_row:
+                col = 0
+                row += 1
     
     def on_search(self, query: str):
         """Handle search query."""
@@ -248,25 +297,17 @@ class LauncherWidget(QtWidgets.QWidget):
             self.show_all_tools()
             return
         
-        # Search for matching tools
-        matching_tools = self.tool_manager.search_tools(query)
-        
-        # Hide non-matching tools
-        for tool_name, button in self.tool_buttons.items():
-            if tool_name in matching_tools:
-                button.show()
-            else:
-                button.hide()
+        # Search for matching tools and keep only existing (enabled) ones
+        matching_tools = [name for name in self.tool_manager.search_tools(query) if name in self.tool_buttons]
         
         self.visible_tools = matching_tools
+        self.layout_tool_buttons()
         self.update_tool_count()
     
     def show_all_tools(self):
         """Show all available tools."""
-        for button in self.tool_buttons.values():
-            button.show()
-        
         self.visible_tools = list(self.tool_buttons.keys())
+        self.layout_tool_buttons()
         self.update_tool_count()
     
     def on_tool_clicked(self, tool_name: str):
@@ -328,38 +369,38 @@ class LauncherWidget(QtWidgets.QWidget):
     def show_error(self, message: str):
         """Show error message."""
         QtWidgets.QMessageBox.warning(self, "Error", message)
-    
+
     def update_tool_count(self):
         """Update the tool count display."""
         visible_count = len(self.visible_tools)
         total_count = len(self.tool_buttons)
-        
         if visible_count == total_count:
             text = f"{total_count} tools"
         else:
             text = f"{visible_count} of {total_count} tools"
-        
         self.tool_count_label.setText(text)
-    
+
     def focus_search_input(self):
         """Focus the search input field."""
         self.search_input.setFocus()
         self.search_input.selectAll()
-    
+
     def update_settings(self, ui_settings: UISettings):
         """Update UI settings."""
         self.ui_settings = ui_settings
-        
         # Update theme and apply styles
         self.style_manager.set_theme(ui_settings.theme)
         self.apply_styles()
-        
         # Update AI status
         self.ai_status_label.setText("🤖 AI Ready" if self.ai_manager.is_available() else "🤖 AI Offline")
-        
         # Refresh tools if needed
         self.refresh_tools()
-    
+
+    def resizeEvent(self, event):
+        """Relayout tools on resize for responsiveness."""
+        super().resizeEvent(event)
+        self.layout_tool_buttons()
+
     def keyPressEvent(self, event):
         """Handle key press events."""
         if event.key() == Qt.Key_F5:
@@ -369,5 +410,10 @@ class LauncherWidget(QtWidgets.QWidget):
             # Focus search input and add slash
             self.search_input.setFocus()
             self.search_input.setText("/")
+        elif event.key() == Qt.Key_Escape:
+            # Clear search and show all
+            self.search_input.clear()
+            self.show_all_tools()
+            event.accept()
         else:
-            super().keyPressEvent(event) 
+            super().keyPressEvent(event)

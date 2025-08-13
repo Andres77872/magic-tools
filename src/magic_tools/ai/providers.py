@@ -3,7 +3,6 @@
 import logging
 from abc import ABC, abstractmethod
 from typing import List, Dict, Optional, AsyncGenerator
-import asyncio
 
 from .models import (
     AIResponse,
@@ -72,17 +71,27 @@ class OpenAIProvider(BaseAIProvider):
         # Don't keep a persistent session - create a new one for each request
         # This avoids issues with closed event loops
     
-    async def _create_session(self):
-        """Create a new aiohttp session for the current request."""
+    async def _create_session(self, streaming: bool = False, timeout: Optional[float] = 60.0):
+        """Create a new aiohttp session for the current request.
+
+        Args:
+            streaming: If True, configure timeouts suitable for streaming.
+            timeout: Total timeout (seconds) for non-streaming requests.
+        """
         try:
             import aiohttp
             if self.api_key:
                 # Always create a fresh session for each request
+                if streaming:
+                    timeout_cfg = aiohttp.ClientTimeout(total=None, sock_connect=30, sock_read=300)
+                else:
+                    timeout_cfg = aiohttp.ClientTimeout(total=timeout)
                 session = aiohttp.ClientSession(
                     headers={
                         'Authorization': f'Bearer {self.api_key}',
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    timeout=timeout_cfg
                 )
                 self.logger.info("OpenAI aiohttp session created")
                 return session
@@ -120,44 +129,58 @@ class OpenAIProvider(BaseAIProvider):
                     error="Session creation failed"
                 )
             
-            import aiohttp
-            import json
-            
             payload = {
                 "model": self.model,
                 "messages": messages,
                 "max_tokens": self.max_tokens,
                 "temperature": self.temperature
             }
-            
-            async with session.post(
-                f"{self.base_url}/chat/completions",
-                json=payload
-            ) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    # Convert to typed model for easier downstream access
-                    chat_completion = OpenAIChatCompletion.from_dict(data)
-                    
-                    content = chat_completion.choices[0].message.content
-                    tokens_used = chat_completion.usage.total_tokens
-                    self.tokens_used += tokens_used
-                    
-                    return AIResponse(
-                        content=content,
-                        tokens_used=tokens_used,
-                        model_used=chat_completion.model,
-                        success=True,
-                        raw_response=chat_completion
-                    )
-                else:
-                    error_text = await response.text()
-                    self.logger.error(f"OpenAI API error {response.status}: {error_text}")
-                    return AIResponse(
-                        content=f"API Error {response.status}: {error_text}",
-                        success=False,
-                        error=f"HTTP {response.status}: {error_text}"
-                    )
+            try:
+                async with session.post(
+                    f"{self.base_url}/chat/completions",
+                    json=payload
+                ) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        # Convert to typed model for easier downstream access
+                        chat_completion = OpenAIChatCompletion.from_dict(data)
+                        # Safely extract content and token usage
+                        content = ""
+                        if chat_completion.choices:
+                            msg = chat_completion.choices[0].message
+                            content = (msg.content or "")
+                        tokens_used = getattr(chat_completion.usage, "total_tokens", 0) or 0
+                        self.tokens_used += tokens_used
+                        
+                        return AIResponse(
+                            content=content,
+                            tokens_used=tokens_used,
+                            model_used=chat_completion.model,
+                            success=True,
+                            raw_response=chat_completion
+                        )
+                    else:
+                        error_text = await response.text()
+                        try:
+                            import json
+                            err_msg = None
+                            data = json.loads(error_text)
+                            if isinstance(data, dict):
+                                err_msg = (data.get("error", {}) or {}).get("message") or data.get("message")
+                        except Exception:
+                            err_msg = None
+                        msg = f"HTTP {response.status}: {err_msg or error_text}"
+                        self.logger.error(f"OpenAI API error {msg}")
+                        return AIResponse(
+                            content=f"API Error {msg}",
+                            success=False,
+                            error=msg
+                        )
+            finally:
+                try:
+                    await session.close()
+                except Exception:
+                    pass
             
         except Exception as e:
             self.logger.error(f"OpenAI API error: {e}")
@@ -175,7 +198,7 @@ class OpenAIProvider(BaseAIProvider):
         
         try:
             # Create a fresh session for this request
-            session = await self._create_session()
+            session = await self._create_session(streaming=True)
             
             if not session:
                 yield "Failed to create OpenAI session. Please try again."
@@ -190,30 +213,59 @@ class OpenAIProvider(BaseAIProvider):
                 "temperature": self.temperature,
                 "stream": True
             }
-            
-            async with session.post(
-                f"{self.base_url}/chat/completions",
-                json=payload
-            ) as response:
-                if response.status == 200:
-                    async for line in response.content:
-                        line = line.decode('utf-8').strip()
-                        if line.startswith('data: '):
-                            data_str = line[6:]  # Remove 'data: ' prefix
-                            if data_str == '[DONE]':
+            try:
+                async with session.post(
+                    f"{self.base_url}/chat/completions",
+                    json=payload,
+                    headers={"Accept": "text/event-stream"}
+                ) as response:
+                    if response.status == 200:
+                        buffer = ""
+                        done = False
+                        async for raw_chunk in response.content:
+                            if done:
                                 break
-                            
                             try:
-                                stream_data = json.loads(data_str)
-                                stream_chunk = OpenAIStreamChunk.from_dict(stream_data)
-                                if stream_chunk.choices and stream_chunk.choices[0].delta.content is not None:
-                                    yield stream_chunk.choices[0].delta.content
-                            except json.JSONDecodeError:
-                                continue
-                else:
-                    error_text = await response.text()
-                    self.logger.error(f"OpenAI streaming error {response.status}: {error_text}")
-                    yield f"Error {response.status}: {error_text}"
+                                chunk = raw_chunk.decode('utf-8')
+                            except UnicodeDecodeError:
+                                chunk = raw_chunk.decode('utf-8', errors='ignore')
+                            buffer += chunk
+                            while '\n' in buffer:
+                                line, _, buffer = buffer.partition('\n')
+                                line = line.strip()
+                                if not line:
+                                    continue
+                                if not line.startswith('data: '):
+                                    continue
+                                data_str = line[6:].strip()
+                                if data_str == '[DONE]':
+                                    done = True
+                                    break
+                                try:
+                                    stream_data = json.loads(data_str)
+                                    stream_chunk = OpenAIStreamChunk.from_dict(stream_data)
+                                    if (stream_chunk.choices and
+                                        stream_chunk.choices[0].delta.content is not None):
+                                        yield stream_chunk.choices[0].delta.content
+                                except json.JSONDecodeError:
+                                    continue
+                    else:
+                        err_text = await response.text()
+                        err_msg = None
+                        try:
+                            err_data = json.loads(err_text)
+                            if isinstance(err_data, dict):
+                                err_msg = (err_data.get("error", {}) or {}).get("message") or err_data.get("message")
+                        except Exception:
+                            pass
+                        msg = f"HTTP {response.status}: {err_msg or err_text}"
+                        self.logger.error(f"OpenAI streaming error {msg}")
+                        yield f"Error: {msg}"
+            finally:
+                try:
+                    await session.close()
+                except Exception:
+                    pass
                     
         except Exception as e:
             self.logger.error(f"OpenAI streaming error: {e}")
@@ -229,159 +281,10 @@ class OpenAIProvider(BaseAIProvider):
             settings.base_url != self.base_url):
             self.api_key = settings.api_key
             self.base_url = settings.base_url.rstrip('/')
-            
-            # Close old session if exists
-            if self.session:
-                if not self.session.closed:
-                    self.session.connector.close()
-                self.session = None
-            
-            # Don't initialize a new session here
-            # It will be initialized lazily when needed in async methods
+            # Sessions are created per request; nothing to clean up here.
     
     def cleanup(self):
         """Clean up resources."""
         # No need to clean up persistent sessions since we create new ones for each request
         self.logger.info("OpenAI provider cleanup completed")
-
-
-class LocalProvider(BaseAIProvider):
-    """Local AI model provider (placeholder for local models)."""
-    
-    def __init__(self, model_path: str = "", max_tokens: int = 1000, temperature: float = 0.7):
-        super().__init__(max_tokens, temperature)
-        self.model_path = model_path
-        self.model = None
-        
-        # Try to initialize local model
-        self._initialize_model()
-    
-    def _initialize_model(self):
-        """Initialize local model."""
-        try:
-            if self.model_path:
-                # This is a placeholder for local model initialization
-                # You would typically use libraries like transformers, llama-cpp-python, etc.
-                self.logger.info(f"Would initialize local model from: {self.model_path}")
-                # self.model = load_model(self.model_path)
-            else:
-                self.logger.warning("Local model path not provided")
-        except Exception as e:
-            self.logger.error(f"Failed to initialize local model: {e}")
-    
-    def is_available(self) -> bool:
-        """Check if local provider is available."""
-        # For now, always return False as this is a placeholder
-        return False and bool(self.model_path)
-    
-    async def generate_response(self, messages: List[Dict[str, str]]) -> AIResponse:
-        """Generate response using local model."""
-        if not self.is_available():
-            return AIResponse(
-                content="Local AI provider is not yet implemented. Please use OpenAI provider.",
-                success=False,
-                error="Provider not implemented"
-            )
-        
-        try:
-            # This is a placeholder for local model inference
-            # You would implement the actual model inference here
-            content = "This is a placeholder response from local model."
-            
-            return AIResponse(
-                content=content,
-                tokens_used=len(content.split()),
-                model_used="local",
-                success=True
-            )
-            
-        except Exception as e:
-            self.logger.error(f"Local model error: {e}")
-            return AIResponse(
-                content=f"Error: {str(e)}",
-                success=False,
-                error=str(e)
-            )
-    
-    async def stream_response(self, messages: List[Dict[str, str]]) -> AsyncGenerator[str, None]:
-        """Stream response using local model."""
-        if not self.is_available():
-            yield "Local AI provider is not yet implemented. Please use OpenAI provider."
-            return
-        
-        try:
-            # This is a placeholder for local model streaming
-            response = "This is a placeholder streaming response from local model."
-            for word in response.split():
-                yield word + " "
-                await asyncio.sleep(0.1)  # Simulate streaming delay
-                
-        except Exception as e:
-            self.logger.error(f"Local model streaming error: {e}")
-            yield f"Error: {str(e)}"
-    
-    def update_settings(self, settings):
-        """Update local provider settings."""
-        super().update_settings(settings)
-        
-        # Update model path if changed
-        if settings.local_model_path != self.model_path:
-            self.model_path = settings.local_model_path
-            self._initialize_model()
-
-
-class MockProvider(BaseAIProvider):
-    """Mock AI provider for testing and development."""
-    
-    def __init__(self, max_tokens: int = 1000, temperature: float = 0.7):
-        super().__init__(max_tokens, temperature)
-    
-    def is_available(self) -> bool:
-        """Mock provider is always available."""
-        return True
-    
-    async def generate_response(self, messages: List[Dict[str, str]]) -> AIResponse:
-        """Generate mock response."""
-        try:
-            # Create a mock response based on the last message
-            last_message = messages[-1]["content"] if messages else "Hello"
-            
-            mock_responses = [
-                f"This is a mock response to: '{last_message}'",
-                "I'm a mock AI assistant. In a real implementation, I would provide helpful responses.",
-                "Mock AI is ready to help! (This is just a placeholder)",
-                f"You asked: '{last_message}'. This is a simulated response."
-            ]
-            
-            # Simple hash-based selection for consistent responses
-            response_idx = hash(last_message) % len(mock_responses)
-            content = mock_responses[response_idx]
-            
-            return AIResponse(
-                content=content,
-                tokens_used=len(content.split()),
-                model_used="mock",
-                success=True
-            )
-            
-        except Exception as e:
-            self.logger.error(f"Mock provider error: {e}")
-            return AIResponse(
-                content=f"Mock error: {str(e)}",
-                success=False,
-                error=str(e)
-            )
-    
-    async def stream_response(self, messages: List[Dict[str, str]]) -> AsyncGenerator[str, None]:
-        """Stream mock response."""
-        try:
-            response = await self.generate_response(messages)
-            
-            # Stream the response word by word
-            for word in response.content.split():
-                yield word + " "
-                await asyncio.sleep(0.05)  # Simulate streaming delay
-                
-        except Exception as e:
-            self.logger.error(f"Mock streaming error: {e}")
-            yield f"Mock streaming error: {str(e)}" 
+ 

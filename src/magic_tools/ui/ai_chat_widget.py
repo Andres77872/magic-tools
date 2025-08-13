@@ -26,21 +26,33 @@ class MessageWidget(QtWidgets.QWidget):
         layout.setContentsMargins(10, 5, 10, 5)
         
         # Message bubble
-        bubble = QtWidgets.QLabel(self.message.content)
-        bubble.setWordWrap(True)
-        bubble.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.bubble = QtWidgets.QLabel(self.message.content)
+        self.bubble.setWordWrap(True)
+        self.bubble.setTextInteractionFlags(Qt.TextSelectableByMouse)
         
         # Style based on role
         if self.message.role == "user":
-            bubble.setAlignment(Qt.AlignRight)
-            bubble.setProperty("class", "message-bubble-user")
+            self.bubble.setAlignment(Qt.AlignRight)
+            self.bubble.setProperty("class", "message-bubble-user")
             layout.addStretch()
-            layout.addWidget(bubble)
+            layout.addWidget(self.bubble)
         else:  # assistant
-            bubble.setAlignment(Qt.AlignLeft)
-            bubble.setProperty("class", "message-bubble-assistant")
-            layout.addWidget(bubble)
+            self.bubble.setAlignment(Qt.AlignLeft)
+            self.bubble.setProperty("class", "message-bubble-assistant")
+            layout.addWidget(self.bubble)
             layout.addStretch()
+ 
+    def set_text(self, text: str):
+        """Replace the message content and refresh the bubble."""
+        self.message.content = text
+        self.bubble.setText(self.message.content)
+        self.bubble.adjustSize()
+    
+    def append_text(self, text: str):
+        """Append text to the message content and refresh the bubble."""
+        if not text:
+            return
+        self.set_text(self.message.content + text)
 
 
 class AIWorker(QThread):
@@ -57,6 +69,11 @@ class AIWorker(QThread):
         self.context = context
         self.streaming = False
         self.logger = logger or logging.getLogger(__name__)
+        self._cancel_requested = False
+    
+    def request_cancel(self):
+        """Request cancellation of the running task."""
+        self._cancel_requested = True
     
     def run(self):
         """Run the AI request in a separate thread."""
@@ -85,8 +102,16 @@ class AIWorker(QThread):
         """Handle streaming response mode."""
         async def stream_response():
             try:
-                async for chunk in self.ai_manager.stream_response(self.message, self.context):
+                agen = self.ai_manager.stream_response(self.message, self.context)
+                async for chunk in agen:
                     self.streaming_chunk.emit(chunk)
+                    if self._cancel_requested:
+                        # Attempt to close the async generator gracefully
+                        try:
+                            await agen.aclose()  # type: ignore[attr-defined]
+                        except Exception:
+                            pass
+                        break
             except Exception as e:
                 self.error_occurred.emit(f"Streaming error: {str(e)}")
                 self.logger.error(f"Streaming error: {str(e)}")
@@ -161,6 +186,7 @@ class AIChatWidget(QtWidgets.QWidget):
         self.is_waiting_for_response = False
         self.current_worker = None
         self.streaming_message_widget = None
+        self._cancel_in_progress = False
         
         # Setup UI
         self.setup_ui()
@@ -311,16 +337,13 @@ How can I help you today?"""
         # Clear input field
         self.input_field.clear()
         
-        # Disable UI elements during request
-        self.send_button.setEnabled(False)
-        self.input_field.setEnabled(False)
+        # Keep input enabled; update status
         self.show_status("Thinking...")
         
         # Check if AI is available
         if not self.ai_manager.is_available():
             self.show_status("AI is not available. Please check your configuration.")
-            self.send_button.setEnabled(True)
-            self.input_field.setEnabled(True)
+            self._set_streaming_ui(False)
             return
         
         # Add message to chat
@@ -332,8 +355,9 @@ How can I help you today?"""
     
     def send_to_ai(self, message: str):
         """Send message to AI in a separate thread."""
-        # Show sending status
-        self.show_status("Sending message to AI...")
+        # Prepare UI for streaming (non-blocking input, send->cancel)
+        self._set_streaming_ui(True)
+        self.show_status("Streaming response...")
         
         # Stop any existing worker thread
         if hasattr(self, 'current_worker') and self.current_worker and self.current_worker.isRunning():
@@ -349,14 +373,25 @@ How can I help you today?"""
             try:
                 self.current_worker.response_received.disconnect()
                 self.current_worker.error_occurred.disconnect()
+                self.current_worker.streaming_chunk.disconnect()
+                self.current_worker.finished.disconnect()
             except TypeError:
                 # Signal was not connected
                 pass
         
         # Create and start worker thread
         self.current_worker = AIWorker(self.ai_manager, message)
+        # Enable streaming mode
+        self.current_worker.streaming = True
         self.current_worker.response_received.connect(self.on_ai_response)
         self.current_worker.error_occurred.connect(self.on_ai_error)
+        self.current_worker.streaming_chunk.connect(self.on_streaming_chunk)
+        # Use thread finished signal to know when streaming completes
+        self.current_worker.finished.connect(self.on_streaming_finished)
+        
+        # Create a placeholder assistant message to stream into
+        placeholder_message = AIMessage(role="assistant", content="")
+        self.streaming_message_widget = self.add_message_to_chat(placeholder_message)
         
         # Start worker
         self.is_waiting_for_response = True
@@ -364,9 +399,7 @@ How can I help you today?"""
     
     def on_ai_response(self, response: AIResponse):
         """Handle AI response."""
-        self.is_waiting_for_response = False
-        self.send_button.setEnabled(True)
-        self.input_field.setEnabled(True)
+        self._set_streaming_ui(False)
         
         if response.success:
             # Add AI response to chat
@@ -391,9 +424,7 @@ How can I help you today?"""
     
     def on_ai_error(self, error: str):
         """Handle AI error."""
-        self.is_waiting_for_response = False
-        self.send_button.setEnabled(True)
-        self.input_field.setEnabled(True)
+        self._set_streaming_ui(False)
         
         self.show_status(f"Error: {error}")
         
@@ -406,6 +437,50 @@ How can I help you today?"""
         
         # Focus input
         self.input_field.setFocus()
+    
+    def on_streaming_chunk(self, chunk: str):
+        """Append a streamed chunk to the assistant message bubble."""
+        try:
+            if self.streaming_message_widget is None:
+                # Create if not already created (safety)
+                placeholder_message = AIMessage(role="assistant", content="")
+                self.streaming_message_widget = self.add_message_to_chat(placeholder_message)
+            # Append text to the message bubble
+            if hasattr(self.streaming_message_widget, "append_text"):
+                self.streaming_message_widget.append_text(chunk)
+                # Keep view pinned to bottom while streaming
+                self.scroll_to_bottom()
+            else:
+                # Fallback: recreate widget (should not happen after update)
+                current_text = getattr(self.streaming_message_widget, "message", AIMessage("assistant", "")).content
+                new_message = AIMessage(role="assistant", content=current_text + chunk)
+                self.streaming_message_widget = self.add_message_to_chat(new_message)
+        except Exception as e:
+            self.logger.error(f"Error updating streaming chunk: {e}")
+    
+    def on_streaming_finished(self):
+        """Finalize UI after streaming completes."""
+        self._set_streaming_ui(False)
+        if self._cancel_in_progress:
+            self.show_status("Cancelled")
+        else:
+            self.show_status("Response received")
+        # Clear reference so next stream creates a new bubble
+        self.streaming_message_widget = None
+        self._cancel_in_progress = False
+
+    def cancel_stream(self):
+        """Cancel the current streaming response."""
+        if self.current_worker and self.current_worker.isRunning():
+            self.show_status("Cancelling...")
+            try:
+                self._cancel_in_progress = True
+                self.current_worker.request_cancel()
+            except Exception as e:
+                self.logger.error(f"Error requesting cancel: {e}")
+            # Do not immediately reset UI; wait for finished signal
+        else:
+            self.logger.info("No active stream to cancel")
     
     def add_message_to_chat(self, message: AIMessage):
         """Add a message to the chat display."""
@@ -427,6 +502,7 @@ How can I help you today?"""
         
         # Scroll to bottom
         QtCore.QTimer.singleShot(100, self.scroll_to_bottom)
+        return message_widget
     
     def scroll_to_bottom(self):
         """Scroll chat to the bottom."""
@@ -487,15 +563,63 @@ How can I help you today?"""
         if event.key() == Qt.Key_Escape:
             self.close_requested.emit()
         elif event.key() == Qt.Key_Return and event.modifiers() == Qt.ControlModifier:
+            if self.is_waiting_for_response:
+                event.accept()
+                return
             self.send_message()
         else:
             super().keyPressEvent(event)
-    
+
     def closeEvent(self, event):
         """Handle close event."""
         # Stop any running worker
         if self.current_worker and self.current_worker.isRunning():
+            try:
+                self.current_worker.request_cancel()
+            except Exception:
+                pass
             self.current_worker.quit()
             self.current_worker.wait()
         
-        super().closeEvent(event) 
+        super().closeEvent(event)
+
+    def _set_streaming_ui(self, on: bool):
+        """Toggle UI state for streaming mode.
+        - Keep input enabled so user can type while streaming
+        - Disable sending new messages by disconnecting Enter/Ctrl+Enter
+        - Change Send button to Cancel (and back)
+        """
+        self.is_waiting_for_response = on
+        # Always keep input enabled per user request
+        self.input_field.setEnabled(True)
+        
+        # Manage returnPressed (Enter) to prevent sending while streaming
+        try:
+            self.input_field.returnPressed.disconnect(self.send_message)
+        except TypeError:
+            pass
+        if not on:
+            # Reconnect when not streaming
+            try:
+                self.input_field.returnPressed.connect(self.send_message)
+            except Exception:
+                pass
+        
+        # Update Send button behavior
+        try:
+            self.send_button.clicked.disconnect(self.send_message)
+        except TypeError:
+            pass
+        try:
+            self.send_button.clicked.disconnect(self.cancel_stream)
+        except TypeError:
+            pass
+        
+        if on:
+            self.send_button.setText("Cancel")
+            self.send_button.clicked.connect(self.cancel_stream)
+        else:
+            self.send_button.setText("Send")
+            self.send_button.clicked.connect(self.send_message)
+    
+    # NOTE: Removed stray top-level duplicates accidentally introduced earlier.

@@ -13,6 +13,8 @@ class AIMessage:
     role: str  # 'user', 'assistant', 'system'
     content: str
     timestamp: float = 0.0
+    # Optional small badge text to render above the bubble (e.g., "/translate")
+    badge: str = ""
 
 
 @dataclass

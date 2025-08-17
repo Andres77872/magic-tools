@@ -51,6 +51,22 @@ class MessageWidget(QtWidgets.QWidget):
         except Exception:
             pass
 
+        # Optional badge above message content
+        if getattr(self.message, 'badge', None):
+            badge = QtWidgets.QLabel(self)
+            badge.setText(self._build_badge_html(self.message.badge))
+            badge.setTextFormat(Qt.RichText)
+            badge.setAlignment(Qt.AlignLeft)
+            badge.setProperty("class", "chat-badge")
+            # Insert a small vertical layout to stack badge above bubble
+            container = QtWidgets.QVBoxLayout()
+            container.setContentsMargins(0, 0, 0, 0)
+            container.setSpacing(2)
+            container.addWidget(badge, 0, Qt.AlignLeft)
+            container.addWidget(self.bubble, 0)
+        else:
+            container = None
+
         # Populate content
         self._set_rich_text(self.message.content)
         self._apply_bubble_size()
@@ -73,10 +89,20 @@ class MessageWidget(QtWidgets.QWidget):
         if self.message.role == "user":
             self.bubble.setProperty("class", "message-bubble-user")
             layout.addStretch()
-            layout.addWidget(self.bubble, 0, Qt.AlignRight)
+            if container:
+                wrapper = QtWidgets.QWidget()
+                wrapper.setLayout(container)
+                layout.addWidget(wrapper, 0, Qt.AlignRight)
+            else:
+                layout.addWidget(self.bubble, 0, Qt.AlignRight)
         else:  # assistant
             self.bubble.setProperty("class", "message-bubble-assistant")
-            layout.addWidget(self.bubble, 0, Qt.AlignLeft)
+            if container:
+                wrapper = QtWidgets.QWidget()
+                wrapper.setLayout(container)
+                layout.addWidget(wrapper, 0, Qt.AlignLeft)
+            else:
+                layout.addWidget(self.bubble, 0, Qt.AlignLeft)
             layout.addStretch()
 
     def resizeEvent(self, event: QtGui.QResizeEvent):
@@ -251,6 +277,24 @@ class MessageWidget(QtWidgets.QWidget):
 
         # Wrap in a simple container to constrain width
         return f"<div style=\"white-space: normal; word-wrap: break-word;\">{text}</div>"
+
+    @staticmethod
+    def _build_badge_html(text: str) -> str:
+        t = (text or "").strip()
+        if not t:
+            return ""
+        return (
+            "<span style=\""
+            "display:inline-block;"
+            "padding:2px 6px;"
+            "margin-left:6px;"
+            "font-size:10px;"
+            "border-radius:6px;"
+            "background:#27ae60;"
+            "color:white;"
+            "opacity:0.9;"
+            "\">" + QtGui.QGuiApplication.translate("", t) + "</span>"
+        )
 
 
 class AIWorker(QThread):
@@ -607,14 +651,16 @@ How can I help you today?"""
 
                 context_prompt = system_prompt
                 outgoing_text = content_after.strip()
+                badge = f"/{command}"
         except Exception as e:
             self.logger.error(f"Slash command handling error: {e}")
             # Fallback to raw message
             context_prompt = ""
             outgoing_text = message
+            badge = ""
 
         # Add (possibly transformed) user text to chat
-        user_message = AIMessage(role="user", content=outgoing_text)
+        user_message = AIMessage(role="user", content=outgoing_text, badge=badge if 'badge' in locals() else "")
         self.add_message_to_chat(user_message)
 
         # Send message to AI in a separate thread, passing the system prompt if any

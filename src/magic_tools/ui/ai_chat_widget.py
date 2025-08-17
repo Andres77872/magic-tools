@@ -2,7 +2,8 @@
 
 import logging
 import asyncio
-from typing import Optional
+import time
+from typing import Optional, List
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt, pyqtSignal, QThread, QTimer
 
@@ -10,6 +11,8 @@ from ..ai import AIManager
 from ..ai.ai_manager import AIMessage, AIResponse
 from ..config.settings import UISettings
 from .style import StyleManager
+from ..core.chat_storage import ChatStorageManager, Chat
+from .chat_manager_widget import ChatManagerWidget
 
 
 class MessageWidget(QtWidgets.QWidget):
@@ -414,13 +417,23 @@ class AIChatWidget(QtWidgets.QWidget):
     back_to_launcher = pyqtSignal()
     close_requested = pyqtSignal()
     
-    def __init__(self, ai_manager: AIManager, parent=None, tool_manager=None):
+    def __init__(self, ai_manager: AIManager, parent=None, tool_manager=None, config_manager=None):
         super().__init__(parent)
         
         self.logger = logging.getLogger(__name__)
         self.ai_manager = ai_manager
         self.tool_manager = tool_manager
+        self.config_manager = config_manager
         self.ui_settings = None
+        
+        # Initialize chat storage
+        self.chat_storage = None
+        if config_manager:
+            self.chat_storage = ChatStorageManager(config_manager)
+        
+        # Current chat state
+        self.current_chat = None  # type: Optional[Chat]
+        self.chat_modified = False  # Track if current chat has unsaved changes
         
         # Initialize style manager
         self.style_manager = StyleManager()
@@ -430,6 +443,7 @@ class AIChatWidget(QtWidgets.QWidget):
         self.input_field = None
         self.send_button = None
         self.status_label = None
+        self.chat_manager_dialog = None
         
         # Chat state
         self.is_waiting_for_response = False
@@ -476,7 +490,10 @@ class AIChatWidget(QtWidgets.QWidget):
     
     def setup_header(self):
         """Setup the header section."""
-        header_layout = QtWidgets.QHBoxLayout()
+        header_layout = QtWidgets.QVBoxLayout()
+        
+        # Top row: Back button, title, AI status
+        top_row = QtWidgets.QHBoxLayout()
         
         # Back button
         back_button = QtWidgets.QPushButton("← Back")
@@ -484,10 +501,23 @@ class AIChatWidget(QtWidgets.QWidget):
         back_button.clicked.connect(self.back_to_launcher.emit)
         back_button.setProperty("class", "chat-back-button")
         
-        # Title
+        # Title and chat name
+        title_container = QtWidgets.QVBoxLayout()
+        title_container.setSpacing(2)
+        
         title_label = QtWidgets.QLabel("AI Assistant")
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setProperty("class", "chat-title")
+        
+        self.chat_name_label = QtWidgets.QLabel("New Chat")
+        self.chat_name_label.setAlignment(Qt.AlignCenter)
+        self.chat_name_label.setProperty("class", "chat-name-label")
+        font = self.chat_name_label.font()
+        font.setPointSize(font.pointSize() - 1)
+        self.chat_name_label.setFont(font)
+        
+        title_container.addWidget(title_label)
+        title_container.addWidget(self.chat_name_label)
         
         # AI status
         ai_status = "🟢 Connected" if self.ai_manager.is_available() else "🔴 Disconnected"
@@ -495,9 +525,55 @@ class AIChatWidget(QtWidgets.QWidget):
         self.ai_status_label.setAlignment(Qt.AlignRight)
         self.ai_status_label.setProperty("class", "chat-ai-status")
         
-        header_layout.addWidget(back_button)
-        header_layout.addWidget(title_label)
-        header_layout.addWidget(self.ai_status_label)
+        top_row.addWidget(back_button)
+        top_row.addLayout(title_container)
+        top_row.addWidget(self.ai_status_label)
+        
+        # Chat management buttons (only if chat storage is available)
+        if self.chat_storage:
+            chat_controls = QtWidgets.QHBoxLayout()
+            chat_controls.setSpacing(8)
+            
+            # New chat button
+            self.new_chat_button = QtWidgets.QPushButton("New")
+            self.new_chat_button.setFixedSize(50, 25)
+            self.new_chat_button.clicked.connect(self.new_chat)
+            self.new_chat_button.setProperty("class", "chat-control-button")
+            self.new_chat_button.setToolTip("Create a new chat")
+            
+            # Save chat button
+            self.save_chat_button = QtWidgets.QPushButton("Save")
+            self.save_chat_button.setFixedSize(50, 25)
+            self.save_chat_button.clicked.connect(self.save_current_chat)
+            self.save_chat_button.setProperty("class", "chat-control-button")
+            self.save_chat_button.setToolTip("Save current chat")
+            
+            # Load/Manage chats button
+            self.manage_chats_button = QtWidgets.QPushButton("Chats")
+            self.manage_chats_button.setFixedSize(50, 25)
+            self.manage_chats_button.clicked.connect(self.show_chat_manager)
+            self.manage_chats_button.setProperty("class", "chat-control-button")
+            self.manage_chats_button.setToolTip("Manage saved chats")
+            
+            # Chat modified indicator
+            self.modified_indicator = QtWidgets.QLabel("●")
+            self.modified_indicator.setProperty("class", "chat-modified-indicator")
+            self.modified_indicator.setFixedSize(12, 12)
+            self.modified_indicator.setAlignment(Qt.AlignCenter)
+            self.modified_indicator.setToolTip("Chat has unsaved changes")
+            self.modified_indicator.hide()
+            
+            chat_controls.addStretch()
+            chat_controls.addWidget(self.new_chat_button)
+            chat_controls.addWidget(self.save_chat_button)
+            chat_controls.addWidget(self.manage_chats_button)
+            chat_controls.addWidget(self.modified_indicator)
+            chat_controls.addStretch()
+            
+            header_layout.addLayout(top_row)
+            header_layout.addLayout(chat_controls)
+        else:
+            header_layout.addLayout(top_row)
         
         self.main_layout.addLayout(header_layout)
     
@@ -698,7 +774,7 @@ How can I help you today?"""
             self.logger.error(f"Command badge handling error: {e}")
 
         # Add (possibly transformed) user text to chat
-        user_message = AIMessage(role="user", content=outgoing_text, badge=badge)
+        user_message = AIMessage(role="user", content=outgoing_text, badge=badge, timestamp=time.time())
         self.add_message_to_chat(user_message)
 
         # Send message to AI in a separate thread, passing the system prompt if any
@@ -744,7 +820,7 @@ How can I help you today?"""
         self.current_worker.finished.connect(self.on_streaming_finished)
         
         # Create a placeholder assistant message to stream into
-        placeholder_message = AIMessage(role="assistant", content="")
+        placeholder_message = AIMessage(role="assistant", content="", timestamp=time.time())
         self.streaming_message_widget = self.add_message_to_chat(placeholder_message)
         
         # Start worker
@@ -757,7 +833,7 @@ How can I help you today?"""
         
         if response.success:
             # Add AI response to chat
-            ai_message = AIMessage(role="assistant", content=response.content)
+            ai_message = AIMessage(role="assistant", content=response.content, timestamp=time.time())
             self.add_message_to_chat(ai_message)
             
             # Update status
@@ -769,7 +845,8 @@ How can I help you today?"""
             # Show error message in chat
             error_message = AIMessage(
                 role="assistant", 
-                content=f"Sorry, I encountered an error: {response.error}"
+                content=f"Sorry, I encountered an error: {response.error}",
+                timestamp=time.time()
             )
             self.add_message_to_chat(error_message)
         
@@ -785,7 +862,8 @@ How can I help you today?"""
         # Show error message in chat
         error_message = AIMessage(
             role="assistant", 
-            content=f"Sorry, I encountered an error: {error}"
+            content=f"Sorry, I encountered an error: {error}",
+            timestamp=time.time()
         )
         self.add_message_to_chat(error_message)
         
@@ -797,7 +875,7 @@ How can I help you today?"""
         try:
             if self.streaming_message_widget is None:
                 # Create if not already created (safety)
-                placeholder_message = AIMessage(role="assistant", content="")
+                placeholder_message = AIMessage(role="assistant", content="", timestamp=time.time())
                 self.streaming_message_widget = self.add_message_to_chat(placeholder_message)
             # Append text to the message bubble
             if hasattr(self.streaming_message_widget, "append_text"):
@@ -807,7 +885,7 @@ How can I help you today?"""
             else:
                 # Fallback: recreate widget (should not happen after update)
                 current_text = getattr(self.streaming_message_widget, "message", AIMessage("assistant", "")).content
-                new_message = AIMessage(role="assistant", content=current_text + chunk)
+                new_message = AIMessage(role="assistant", content=current_text + chunk, timestamp=time.time())
                 self.streaming_message_widget = self.add_message_to_chat(new_message)
         except Exception as e:
             self.logger.error(f"Error updating streaming chunk: {e}")
@@ -838,6 +916,10 @@ How can I help you today?"""
     
     def add_message_to_chat(self, message: AIMessage):
         """Add a message to the chat display."""
+        # Set timestamp if not already set
+        if message.timestamp == 0.0:
+            message.timestamp = time.time()
+        
         # Remove the stretch from the end
         if self.chat_layout.count() > 0:
             stretch_item = self.chat_layout.takeAt(self.chat_layout.count() - 1)
@@ -865,6 +947,18 @@ How can I help you today?"""
         # Add stretch back at the end
         self.chat_layout.addStretch()
         
+        # Mark chat as modified (except for welcome message)
+        if message.content != """👋 Welcome to Magic Tools AI Assistant!
+
+I'm here to help you with:
+• Answering questions
+• Providing information
+• Assisting with tasks
+• General conversation
+
+How can I help you today?""":
+            self._mark_chat_modified()
+        
         # Scroll to bottom
         QtCore.QTimer.singleShot(100, self.scroll_to_bottom)
         return message_widget
@@ -877,8 +971,22 @@ How can I help you today?"""
             self._autoscroll_pinned = True
             self.scroll_bottom_button.hide()
     
-    def clear_chat(self):
+    def clear_chat(self, skip_confirmation=False):
         """Clear the chat history."""
+        # Check for unsaved changes if not skipping confirmation
+        if not skip_confirmation and self.chat_modified and self.current_chat:
+            reply = QtWidgets.QMessageBox.question(
+                self, "Unsaved Changes",
+                "The current chat has unsaved changes. Do you want to save before clearing?",
+                QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel
+            )
+            
+            if reply == QtWidgets.QMessageBox.Cancel:
+                return
+            elif reply == QtWidgets.QMessageBox.Save:
+                if not self.save_current_chat():
+                    return  # Save failed, don't proceed
+        
         # Clear widgets
         for i in reversed(range(self.chat_layout.count())):
             item = self.chat_layout.takeAt(i)
@@ -888,13 +996,21 @@ How can I help you today?"""
         # Clear AI conversation history
         self.ai_manager.clear_conversation()
         
+        # Reset chat state
+        if not skip_confirmation:  # Only reset when manually clearing, not when loading
+            self.current_chat = None
+            self.chat_modified = False
+            self.chat_name_label.setText("New Chat")
+            self._update_modified_indicator()
+        
         # Add stretch back
         self.chat_layout.addStretch()
         
         # Show welcome message again
         self.show_welcome_message()
         
-        self.show_status("Chat cleared")
+        if not skip_confirmation:
+            self.show_status("Chat cleared")
     
     def show_status(self, message: str):
         """Show status message."""
@@ -925,6 +1041,140 @@ How can I help you today?"""
         
         # Update status
         self.update_status()
+    
+    # Chat Management Methods
+    
+    def new_chat(self):
+        """Create a new chat conversation."""
+        if not self.chat_storage:
+            return
+        
+        # Check if current chat has unsaved changes
+        if self.chat_modified and self.current_chat:
+            reply = QtWidgets.QMessageBox.question(
+                self, "Unsaved Changes",
+                "The current chat has unsaved changes. Do you want to save before creating a new chat?",
+                QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel
+            )
+            
+            if reply == QtWidgets.QMessageBox.Cancel:
+                return
+            elif reply == QtWidgets.QMessageBox.Save:
+                if not self.save_current_chat():
+                    return  # Save failed, don't proceed
+        
+        # Create new chat
+        try:
+            new_chat = self.chat_storage.create_chat()
+            self.load_chat(new_chat)
+            self.show_status("New chat created")
+        except Exception as e:
+            self.logger.error(f"Failed to create new chat: {e}")
+            QtWidgets.QMessageBox.warning(self, "Error", f"Failed to create new chat: {str(e)}")
+    
+    def save_current_chat(self) -> bool:
+        """Save the current chat conversation."""
+        if not self.chat_storage or not self.current_chat:
+            return False
+        
+        try:
+            # Update current chat with messages from UI
+            self.current_chat.messages = self._get_current_messages()
+            
+            # Save to storage
+            if self.chat_storage.save_chat(self.current_chat):
+                self.chat_modified = False
+                self._update_modified_indicator()
+                self.show_status(f"Chat '{self.current_chat.metadata.name}' saved")
+                return True
+            else:
+                QtWidgets.QMessageBox.warning(self, "Error", "Failed to save chat")
+                return False
+                
+        except Exception as e:
+            self.logger.error(f"Failed to save chat: {e}")
+            QtWidgets.QMessageBox.warning(self, "Error", f"Failed to save chat: {str(e)}")
+            return False
+    
+    def show_chat_manager(self):
+        """Show the chat management dialog."""
+        if not self.chat_storage:
+            return
+        
+        try:
+            if not self.chat_manager_dialog:
+                self.chat_manager_dialog = ChatManagerWidget(self.chat_storage, self)
+                self.chat_manager_dialog.chat_selected.connect(self.load_chat)
+                self.chat_manager_dialog.new_chat_requested.connect(self.new_chat)
+            
+            # Refresh the dialog and show it
+            self.chat_manager_dialog.refresh_chat_list()
+            self.chat_manager_dialog.exec_()
+            
+        except Exception as e:
+            self.logger.error(f"Failed to show chat manager: {e}")
+            QtWidgets.QMessageBox.warning(self, "Error", f"Failed to open chat manager: {str(e)}")
+    
+    def load_chat(self, chat: Chat):
+        """Load a chat conversation into the UI."""
+        try:
+            # Check if current chat has unsaved changes
+            if self.chat_modified and self.current_chat:
+                reply = QtWidgets.QMessageBox.question(
+                    self, "Unsaved Changes",
+                    "The current chat has unsaved changes. Do you want to save before loading another chat?",
+                    QtWidgets.QMessageBox.Save | QtWidgets.QMessageBox.Discard | QtWidgets.QMessageBox.Cancel
+                )
+                
+                if reply == QtWidgets.QMessageBox.Cancel:
+                    return
+                elif reply == QtWidgets.QMessageBox.Save:
+                    if not self.save_current_chat():
+                        return  # Save failed, don't proceed
+            
+            # Clear current chat display
+            self.clear_chat(skip_confirmation=True)
+            
+            # Set new current chat
+            self.current_chat = chat
+            self.chat_modified = False
+            
+            # Update UI
+            self.chat_name_label.setText(chat.metadata.name)
+            self._update_modified_indicator()
+            
+            # Load messages into AI manager and UI
+            self.ai_manager.clear_conversation()
+            
+            for message in chat.messages:
+                # Add to AI manager conversation history
+                self.ai_manager.conversation_history.append(message)
+                # Add to UI display
+                self.add_message_to_chat(message)
+            
+            self.show_status(f"Chat '{chat.metadata.name}' loaded")
+            
+        except Exception as e:
+            self.logger.error(f"Failed to load chat: {e}")
+            QtWidgets.QMessageBox.warning(self, "Error", f"Failed to load chat: {str(e)}")
+    
+    def _get_current_messages(self) -> List[AIMessage]:
+        """Get current messages from the AI manager."""
+        return list(self.ai_manager.conversation_history)
+    
+    def _update_modified_indicator(self):
+        """Update the modified indicator visibility."""
+        if hasattr(self, 'modified_indicator'):
+            if self.chat_modified:
+                self.modified_indicator.show()
+            else:
+                self.modified_indicator.hide()
+    
+    def _mark_chat_modified(self):
+        """Mark the current chat as modified."""
+        if self.current_chat:
+            self.chat_modified = True
+            self._update_modified_indicator()
     
     def keyPressEvent(self, event):
         """Handle key press events."""

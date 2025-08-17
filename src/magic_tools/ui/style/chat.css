@@ -373,3 +373,173 @@
     color: #27ae60;
     background: rgba(46, 204, 113, 0.2);
 }
+
+/* Chat Management Styles */
+
+/* Chat Control Buttons */
+.dark-theme QPushButton[class="chat-control-button"] {
+    background-color: rgba(100, 100, 100, 150);
+    border: 1px solid rgba(150, 150, 150, 100);
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.dark-theme QPushButton[class="chat-control-button"]:hover {
+    background-color: rgba(120, 120, 120, 180);
+    border-color: rgba(180, 180, 180, 150);
+}
+
+.dark-theme QPushButton[class="chat-control-button"]:pressed {
+    background-color: rgba(80, 80, 80, 200);
+}
+
+.light-theme QPushButton[class="chat-control-button"] {
+    background-color: rgba(200, 200, 200, 150);
+    border: 1px solid rgba(150, 150, 150, 150);
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: #000000;
+    font-size: 10px;
+    font-weight: bold;
+}
+
+.light-theme QPushButton[class="chat-control-button"]:hover {
+    background-color: rgba(180, 180, 180, 180);
+    border-color: rgba(120, 120, 120, 180);
+}
+
+.light-theme QPushButton[class="chat-control-button"]:pressed {
+    background-color: rgba(160, 160, 160, 200);
+}
+
+/* Chat Name Label */
+.dark-theme QLabel[class="chat-name-label"] {
+    color: rgba(255, 255, 255, 180);
+    font-style: italic;
+}
+
+.light-theme QLabel[class="chat-name-label"] {
+    color: rgba(0, 0, 0, 160);
+    font-style: italic;
+}
+
+/* Modified Indicator */
+.dark-theme QLabel[class="chat-modified-indicator"] {
+    color: #ff6b6b;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.light-theme QLabel[class="chat-modified-indicator"] {
+    color: #ff4757;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+/* Chat Manager Dialog Styles */
+.dark-theme QDialog {
+    background-color: #2d2d2d;
+    border: 1px solid #555;
+    border-radius: 8px;
+}
+
+.light-theme QDialog {
+    background-color: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.dark-theme QLabel[class="chat-manager-title"] {
+    color: #ffffff;
+    font-weight: bold;
+}
+
+.light-theme QLabel[class="chat-manager-title"] {
+    color: #000000;
+    font-weight: bold;
+}
+
+.dark-theme QLabel[class="chat-manager-stats"] {
+    color: rgba(255, 255, 255, 180);
+    font-size: 11px;
+}
+
+.light-theme QLabel[class="chat-manager-stats"] {
+    color: rgba(0, 0, 0, 160);
+    font-size: 11px;
+}
+
+/* Chat List Widget in Dialog */
+.dark-theme QListWidget {
+    background-color: rgba(40, 40, 40, 200);
+    border: 1px solid rgba(100, 100, 100, 100);
+    border-radius: 6px;
+    padding: 4px;
+    color: #ffffff;
+}
+
+.light-theme QListWidget {
+    background-color: rgba(250, 250, 250, 200);
+    border: 1px solid rgba(200, 200, 200, 150);
+    border-radius: 6px;
+    padding: 4px;
+    color: #000000;
+}
+
+.dark-theme QListWidget::item {
+    padding: 8px;
+    margin: 2px;
+    border-radius: 4px;
+    background-color: transparent;
+}
+
+.light-theme QListWidget::item {
+    padding: 8px;
+    margin: 2px;
+    border-radius: 4px;
+    background-color: transparent;
+}
+
+.dark-theme QListWidget::item:hover {
+    background-color: rgba(70, 70, 70, 150);
+}
+
+.light-theme QListWidget::item:hover {
+    background-color: rgba(220, 220, 220, 150);
+}
+
+.dark-theme QListWidget::item:selected {
+    background-color: rgba(0, 122, 204, 150);
+    color: #ffffff;
+}
+
+.light-theme QListWidget::item:selected {
+    background-color: rgba(0, 122, 204, 150);
+    color: #ffffff;
+}
+
+/* Danger Button for Delete */
+.dark-theme QPushButton[class="danger-button"] {
+    background-color: rgba(220, 20, 60, 150);
+    border: 1px solid rgba(255, 20, 60, 100);
+    color: #ffffff;
+}
+
+.dark-theme QPushButton[class="danger-button"]:hover {
+    background-color: rgba(240, 40, 80, 180);
+    border-color: rgba(255, 40, 80, 150);
+}
+
+.light-theme QPushButton[class="danger-button"] {
+    background-color: rgba(220, 20, 60, 150);
+    border: 1px solid rgba(200, 20, 60, 100);
+    color: #ffffff;
+}
+
+.light-theme QPushButton[class="danger-button"]:hover {
+    background-color: rgba(240, 40, 80, 180);
+    border-color: rgba(220, 40, 80, 150);
+}

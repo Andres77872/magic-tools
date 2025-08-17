@@ -85,8 +85,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.launcher_widget = LauncherWidget(self.tool_manager, self.ai_manager)
         self.main_layout.addWidget(self.launcher_widget)
         
-        # Create and add AI chat widget (pass tool manager for slash commands)
-        self.ai_chat_widget = AIChatWidget(self.ai_manager, tool_manager=self.tool_manager)
+        # Create and add AI chat widget (pass tool manager for slash commands and config manager for chat storage)
+        self.ai_chat_widget = AIChatWidget(self.ai_manager, tool_manager=self.tool_manager, config_manager=self.config_manager)
         self.main_layout.addWidget(self.ai_chat_widget)
         
         # Create and add config widget

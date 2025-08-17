@@ -4,6 +4,7 @@ import os
 import subprocess
 import math
 import platform
+import shutil
 from typing import Dict, Type, Optional
 from PyQt5 import QtWidgets, QtCore, QtGui
 
@@ -318,6 +319,129 @@ class TextEditorTool(WidgetTool):
                 )
 
 
+class FocusWindowTool(QuickTool):
+    """Focus a window/application matching the selected text or query."""
+    
+    def get_tool_info(self) -> ToolInfo:
+        return ToolInfo(
+            name="Focus Window",
+            description="Focus a window/application matching the selected text or query",
+            category="Productivity",
+            keywords=["focus", "window", "application", "keybind"],
+            author="Magic Tools"
+        )
+    
+    def _get_selected_text(self) -> str:
+        """Try to get currently selected text (X11 selection) or clipboard as fallback."""
+        try:
+            clipboard = QtWidgets.QApplication.clipboard()
+            from PyQt5.QtGui import QClipboard
+            text = clipboard.text(QClipboard.Selection)
+            if not text or not text.strip():
+                text = clipboard.text()
+            return (text or "").strip()
+        except Exception as e:
+            self.logger.debug(f"Clipboard read failed: {e}")
+            return ""
+    
+    def quick_execute(self, query: str = "") -> ToolResult:
+        q = (query or self._get_selected_text()).strip()
+        if not q:
+            return ToolResult(success=False, error="No query or selected text available")
+        
+        try:
+            system = platform.system().lower()
+            if system == "linux":
+                return self._focus_linux(q)
+            elif system == "darwin":
+                return self._focus_macos(q)
+            elif system == "windows":
+                return self._focus_windows(q)
+            else:
+                return ToolResult(success=False, error=f"Unsupported OS: {system}")
+        except Exception as e:
+            return ToolResult(success=False, error=f"Focus failed: {str(e)}")
+    
+    def _focus_linux(self, q: str) -> ToolResult:
+        wmctrl = shutil.which("wmctrl")
+        xdotool = shutil.which("xdotool")
+        ql = q.lower()
+        
+        # Try wmctrl first for better matching and activation by window id
+        if wmctrl:
+            try:
+                out = subprocess.check_output(["wmctrl", "-lx"], text=True, stderr=subprocess.STDOUT)
+                best = None  # (score, win_id, title)
+                for line in out.splitlines():
+                    parts = line.split(None, 4)
+                    if len(parts) >= 5:
+                        win_id, _desk, _host, wclass, title = parts
+                        hay = f"{wclass} {title}".lower()
+                        if ql in hay:
+                            score = 2 if title.lower().startswith(ql) else 1
+                            if best is None or score > best[0]:
+                                best = (score, win_id, title)
+                if best:
+                    win_id = best[1]
+                    subprocess.run(["wmctrl", "-ia", win_id], check=False)
+                    return ToolResult(success=True, message=f"Focused window: {best[2]}")
+            except Exception as e:
+                self.logger.debug(f"wmctrl failed: {e}")
+        
+        # Fallback to xdotool by name
+        if xdotool:
+            try:
+                out = subprocess.check_output(["xdotool", "search", "--name", q], text=True, stderr=subprocess.STDOUT)
+                win_ids = [line.strip() for line in out.splitlines() if line.strip()]
+                if win_ids:
+                    subprocess.run(["xdotool", "windowactivate", win_ids[0]], check=False)
+                    return ToolResult(success=True, message=f"Focused window id: {win_ids[0]}")
+            except subprocess.CalledProcessError:
+                pass
+            except Exception as e:
+                self.logger.debug(f"xdotool failed: {e}")
+        
+        return ToolResult(success=False, error=f"No matching window found for '{q}'")
+    
+    def _focus_macos(self, q: str) -> ToolResult:
+        try:
+            script = (
+                'tell application "System Events"\n'
+                '    set frontApps to name of every process whose background only is false\n'
+                'end tell\n'
+                'repeat with appName in frontApps\n'
+                f'    if (lowercase of appName as text) contains "{q.lower()}" then\n'
+                '        tell application appName to activate\n'
+                '        return\n'
+                '    end if\n'
+                'end repeat\n'
+            )
+            subprocess.run(["osascript", "-e", script], check=True)
+            return ToolResult(success=True, message=f"Focused application matching '{q}'")
+        except Exception as e:
+            return ToolResult(success=False, error=f"macOS focus failed: {str(e)}")
+    
+    def _focus_windows(self, q: str) -> ToolResult:
+        try:
+            # Attempt to activate a window by title using PowerShell and user32 SetForegroundWindow
+            ps = (
+                "Add-Type @\"\n"
+                "using System;\n"
+                "using System.Runtime.InteropServices;\n"
+                "public class Win32 {\n"
+                "    [DllImport(\"user32.dll\")] public static extern bool SetForegroundWindow(IntPtr hWnd);\n"
+                "}\n"
+                "\"@\n"
+                "$procs = Get-Process | Where-Object { $_.MainWindowHandle -ne 0 -and $_.MainWindowTitle -ne '' }\n"
+                f"$match = $procs | Where-Object {{ $_.MainWindowTitle -match '{q.replace("'", "''")}' }} | Select-Object -First 1\n"
+                "if ($match) { [Win32]::SetForegroundWindow($match.MainWindowHandle) }\n"
+            )
+            subprocess.run(["powershell", "-NoProfile", "-Command", ps], check=False)
+            return ToolResult(success=True, message=f"Tried to focus window matching '{q}'")
+        except Exception as e:
+            return ToolResult(success=False, error=f"Windows focus failed: {str(e)}")
+
+
 class BuiltinTools:
     """Container for built-in tools."""
     
@@ -328,6 +452,7 @@ class BuiltinTools:
             "file_search": FileSearchTool,
             "terminal": TerminalTool,
             "text_editor": TextEditorTool,
+            "focus_window": FocusWindowTool,
         }
     
     def get_tool_classes(self) -> Dict[str, Type[BaseTool]]:

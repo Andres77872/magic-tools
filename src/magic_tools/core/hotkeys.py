@@ -13,6 +13,7 @@ class GlobalHotkeyManager(QtCore.QObject):
     toggle_requested = QtCore.pyqtSignal()
     ai_chat_requested = QtCore.pyqtSignal()
     quick_search_requested = QtCore.pyqtSignal()
+    focus_selected_requested = QtCore.pyqtSignal()
     
     def __init__(self):
         super().__init__()
@@ -155,6 +156,7 @@ class GlobalHotkeyManager(QtCore.QObject):
             'toggle': lambda: self.toggle_requested.emit(),
             'ai_chat': lambda: self.ai_chat_requested.emit(),
             'quick_search': lambda: self.quick_search_requested.emit(),
+            'focus_selected': lambda: self.focus_selected_requested.emit(),
         }
         
         if name in callback_map:
@@ -165,17 +167,20 @@ class GlobalHotkeyManager(QtCore.QObject):
     
     def register_default_hotkeys(self, toggle_shortcut: str = "Ctrl+Space", 
                                 ai_chat_shortcut: str = "Ctrl+Alt+A",
-                                quick_search_shortcut: str = "Ctrl+Alt+S"):
+                                quick_search_shortcut: str = "Ctrl+Alt+S",
+                                focus_selected_shortcut: str = "Ctrl+Alt+F"):
         """Register default application hotkeys.
         
         Args:
             toggle_shortcut: Main toggle shortcut
             ai_chat_shortcut: AI chat shortcut
             quick_search_shortcut: Quick search shortcut
+            focus_selected_shortcut: Focus window matching selected text
         """
         self.register_hotkey('toggle', toggle_shortcut, lambda: self.toggle_requested.emit())
         self.register_hotkey('ai_chat', ai_chat_shortcut, lambda: self.ai_chat_requested.emit())
         self.register_hotkey('quick_search', quick_search_shortcut, lambda: self.quick_search_requested.emit())
+        self.register_hotkey('focus_selected', focus_selected_shortcut, lambda: self.focus_selected_requested.emit())
     
     def get_active_hotkeys(self) -> Dict[str, str]:
         """Get currently active hotkeys.

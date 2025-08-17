@@ -41,6 +41,9 @@ class MagicToolsApp(QtWidgets.QApplication):
         # Set up application properties
         self.setup_application()
         
+        # Set up system tray icon
+        self.setup_tray_icon()
+        
         # Connect signals
         self.setup_signals()
         
@@ -76,6 +79,44 @@ class MagicToolsApp(QtWidgets.QApplication):
                 self.setWindowIcon(QtGui.QIcon(icon_path))
         except Exception as e:
             self.logger.debug(f"Could not load application icon: {e}")
+    
+    def setup_tray_icon(self):
+        """Create and show a system tray icon with an Exit option."""
+        try:
+            if not QtWidgets.QSystemTrayIcon.isSystemTrayAvailable():
+                self.logger.info("System tray is not available on this system")
+                self.tray_icon = None
+                return
+            
+            # Choose application icon or a reasonable fallback
+            icon = QtGui.QIcon()
+            try:
+                if QtCore.QFile.exists("resources/icon.png"):
+                    icon = QtGui.QIcon("resources/icon.png")
+            except Exception:
+                pass
+            if icon.isNull():
+                icon = self.style().standardIcon(QtWidgets.QStyle.SP_ComputerIcon)
+            
+            self.tray_icon = QtWidgets.QSystemTrayIcon(icon, self)
+            self.tray_icon.setToolTip("Magic Tools")
+            
+            # Context menu with Exit option
+            tray_menu = QtWidgets.QMenu()
+            exit_action = tray_menu.addAction("Exit")
+            exit_action.triggered.connect(self.quit)
+            self.tray_icon.setContextMenu(tray_menu)
+            
+            # Optional: left-click toggles visibility
+            def on_tray_activated(reason):
+                if reason == QtWidgets.QSystemTrayIcon.Trigger:
+                    self.main_window.toggle_visibility()
+            self.tray_icon.activated.connect(on_tray_activated)
+            
+            self.tray_icon.show()
+            self.logger.info("System tray icon initialized")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize system tray icon: {e}")
     
     def setup_signals(self):
         """Connect signals between components."""
@@ -161,16 +202,19 @@ class MagicToolsApp(QtWidgets.QApplication):
         if self.main_window.isVisible():
             self.main_window.hide()
         
+        # Hide tray icon
+        try:
+            if getattr(self, 'tray_icon', None):
+                self.tray_icon.hide()
+                self.tray_icon.deleteLater()
+        except Exception:
+            pass
+        
         self.logger.info("Application cleanup completed")
     
     def run(self) -> int:
         """Run the application."""
         self.logger.info("Starting Magic Tools application")
-        
-        # Show system tray notification if supported
-        if QtWidgets.QSystemTrayIcon.isSystemTrayAvailable():
-            self.logger.info("System tray is available")
-            # TODO: Add system tray icon functionality
         
         return self.exec_()
 

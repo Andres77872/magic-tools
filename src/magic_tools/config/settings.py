@@ -24,6 +24,7 @@ class HotkeySettings:
     toggle_shortcut: str = "Ctrl+Space"
     ai_chat_shortcut: str = "Ctrl+Alt+A"
     quick_search_shortcut: str = "Ctrl+Alt+S"
+    focus_selected_shortcut: str = "Ctrl+Alt+F"
 
 
 @dataclass
@@ -42,7 +43,7 @@ class AISettings:
 @dataclass
 class ToolSettings:
     """Tool system settings."""
-    enabled_tools: List[str] = field(default_factory=lambda: ["calculator", "file_search", "system_info"])
+    enabled_tools: List[str] = field(default_factory=lambda: ["calculator", "file_search", "system_info", "focus_window"])
     custom_tools_path: str = ""
     auto_load_tools: bool = True
 
@@ -71,6 +72,7 @@ class Settings:
                 "toggle_shortcut": self.hotkeys.toggle_shortcut,
                 "ai_chat_shortcut": self.hotkeys.ai_chat_shortcut,
                 "quick_search_shortcut": self.hotkeys.quick_search_shortcut,
+                "focus_selected_shortcut": self.hotkeys.focus_selected_shortcut,
             },
             "ai": {
                 "provider": self.ai.provider,
@@ -112,6 +114,7 @@ class Settings:
                 toggle_shortcut=hotkey_data.get("toggle_shortcut", settings.hotkeys.toggle_shortcut),
                 ai_chat_shortcut=hotkey_data.get("ai_chat_shortcut", settings.hotkeys.ai_chat_shortcut),
                 quick_search_shortcut=hotkey_data.get("quick_search_shortcut", settings.hotkeys.quick_search_shortcut),
+                focus_selected_shortcut=hotkey_data.get("focus_selected_shortcut", settings.hotkeys.focus_selected_shortcut),
             )
         
         if "ai" in data:

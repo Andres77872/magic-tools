@@ -51,21 +51,18 @@ class MessageWidget(QtWidgets.QWidget):
         except Exception:
             pass
 
-        # Optional badge above message content
+        # Optional badge overlay positioned relative to the bubble (top-right for user)
+        self._badge_label = None
         if getattr(self.message, 'badge', None):
-            badge = QtWidgets.QLabel(self)
-            badge.setText(self._build_badge_html(self.message.badge))
-            badge.setTextFormat(Qt.RichText)
-            badge.setAlignment(Qt.AlignLeft)
-            badge.setProperty("class", "chat-badge")
-            # Insert a small vertical layout to stack badge above bubble
-            container = QtWidgets.QVBoxLayout()
-            container.setContentsMargins(0, 0, 0, 0)
-            container.setSpacing(2)
-            container.addWidget(badge, 0, Qt.AlignLeft)
-            container.addWidget(self.bubble, 0)
-        else:
-            container = None
+            try:
+                self._badge_label = QtWidgets.QLabel(self.bubble)
+                self._badge_label.setText(self._build_badge_html(self.message.badge))
+                self._badge_label.setTextFormat(Qt.RichText)
+                self._badge_label.setProperty("class", "chat-badge")
+                self._badge_label.setAttribute(Qt.WA_TransparentForMouseEvents, True)
+                self._badge_label.hide()  # will be positioned and shown in resizeEvent
+            except Exception:
+                self._badge_label = None
 
         # Populate content
         self._set_rich_text(self.message.content)
@@ -89,20 +86,10 @@ class MessageWidget(QtWidgets.QWidget):
         if self.message.role == "user":
             self.bubble.setProperty("class", "message-bubble-user")
             layout.addStretch()
-            if container:
-                wrapper = QtWidgets.QWidget()
-                wrapper.setLayout(container)
-                layout.addWidget(wrapper, 0, Qt.AlignRight)
-            else:
-                layout.addWidget(self.bubble, 0, Qt.AlignRight)
+            layout.addWidget(self.bubble, 0, Qt.AlignRight)
         else:  # assistant
             self.bubble.setProperty("class", "message-bubble-assistant")
-            if container:
-                wrapper = QtWidgets.QWidget()
-                wrapper.setLayout(container)
-                layout.addWidget(wrapper, 0, Qt.AlignLeft)
-            else:
-                layout.addWidget(self.bubble, 0, Qt.AlignLeft)
+            layout.addWidget(self.bubble, 0, Qt.AlignLeft)
             layout.addStretch()
 
     def resizeEvent(self, event: QtGui.QResizeEvent):
@@ -112,7 +99,25 @@ class MessageWidget(QtWidgets.QWidget):
             br = self.bubble.rect()
             x = br.right() - 20
             y = br.top() + 6
+            # Nudge the copy button down a bit when a badge is present to avoid overlap
+            if self._badge_label and self.message.role == "user":
+                y += 14
             self._copy_button.move(x, y)
+        # Position badge at top-right, slightly overlapping the user bubble
+        if self._badge_label and self.message.role == "user":
+            try:
+                self._badge_label.adjustSize()
+                br = self.bubble.rect()
+                badge_w = self._badge_label.width()
+                badge_h = self._badge_label.height()
+                # Place fully within the bubble near the top-right corner
+                # Small inset so it's visually attached but not clipped by rounded corner
+                x = max(6, br.width() - badge_w - 10)
+                y = max(4, 4)
+                self._badge_label.move(x, y)
+                self._badge_label.show()
+            except Exception:
+                pass
 
     def enterEvent(self, event: QtCore.QEvent):
         if self._copy_button:
@@ -286,13 +291,14 @@ class MessageWidget(QtWidgets.QWidget):
         return (
             "<span style=\""
             "display:inline-block;"
-            "padding:2px 6px;"
-            "margin-left:6px;"
-            "font-size:10px;"
-            "border-radius:6px;"
-            "background:#27ae60;"
+            "padding:1px 6px;"
+            "font-size:9px;"
+            "border-radius:8px;"
+            "background:#2ecc71;"
             "color:white;"
-            "opacity:0.9;"
+            "border:1px solid rgba(0,0,0,0.08);"
+            "box-shadow:0 1px 1px rgba(0,0,0,0.12);"
+            "opacity:0.92;"
             "\">" + QtGui.QGuiApplication.translate("", t) + "</span>"
         )
 

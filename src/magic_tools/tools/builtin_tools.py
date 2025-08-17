@@ -9,6 +9,7 @@ from typing import Dict, Type, Optional
 from PyQt5 import QtWidgets, QtCore, QtGui
 
 from .base_tool import BaseTool, QuickTool, WidgetTool, CommandTool, ToolInfo, ToolResult
+from .prompt_commands import PromptCommandsTool
 
 
 class CalculatorTool(QuickTool):
@@ -453,6 +454,7 @@ class BuiltinTools:
             "terminal": TerminalTool,
             "text_editor": TextEditorTool,
             "focus_window": FocusWindowTool,
+            "prompt_commands": PromptCommandsTool,
         }
     
     def get_tool_classes(self) -> Dict[str, Type[BaseTool]]:

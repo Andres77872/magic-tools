@@ -43,9 +43,51 @@ class AISettings:
 @dataclass
 class ToolSettings:
     """Tool system settings."""
-    enabled_tools: List[str] = field(default_factory=lambda: ["calculator", "file_search", "system_info", "focus_window"])
+    enabled_tools: List[str] = field(default_factory=lambda: [
+        "calculator",
+        "file_search",
+        "system_info",
+        "focus_window",
+        "prompt_commands",
+    ])
     custom_tools_path: str = ""
     auto_load_tools: bool = True
+    # List of prompt command dicts: {"name": str, "description": str, "system_prompt": str}
+    prompt_commands: List[Dict[str, str]] = field(default_factory=lambda: [
+        {
+            "name": "translate",
+            "description": "Translate the following text into English (auto-detect input language).",
+            "system_prompt": (
+                "You are a high-quality translation engine. Detect the input language and translate it "
+                "into natural, fluent English. Preserve meaning, tone, formatting, and inline code. "
+                "Output only the translation, without quotes or commentary."
+            ),
+        },
+        {
+            "name": "rewrite",
+            "description": "Rewrite for clarity and style; fix grammar; keep the original language.",
+            "system_prompt": (
+                "Rewrite the user's text to improve clarity, grammar, and style while preserving meaning. "
+                "Keep the original language. Do not add new information. Output only the rewritten text."
+            ),
+        },
+        {
+            "name": "shorter",
+            "description": "Make the text more concise; keep the original language.",
+            "system_prompt": (
+                "Rewrite the user's text to be more concise while preserving key information and tone. "
+                "Keep the original language. Output only the shortened text."
+            ),
+        },
+        {
+            "name": "shorten",
+            "description": "Alias of /shorter: make the text more concise; keep the original language.",
+            "system_prompt": (
+                "Rewrite the user's text to be more concise while preserving key information and tone. "
+                "Keep the original language. Output only the shortened text."
+            ),
+        },
+    ])
 
 
 @dataclass
@@ -88,6 +130,7 @@ class Settings:
                 "enabled_tools": self.tools.enabled_tools,
                 "custom_tools_path": self.tools.custom_tools_path,
                 "auto_load_tools": self.tools.auto_load_tools,
+                "prompt_commands": self.tools.prompt_commands,
             },
         }
     
@@ -136,6 +179,7 @@ class Settings:
                 enabled_tools=tools_data.get("enabled_tools", settings.tools.enabled_tools),
                 custom_tools_path=tools_data.get("custom_tools_path", settings.tools.custom_tools_path),
                 auto_load_tools=tools_data.get("auto_load_tools", settings.tools.auto_load_tools),
+                prompt_commands=tools_data.get("prompt_commands", settings.tools.prompt_commands),
             )
         
         return settings 

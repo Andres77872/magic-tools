@@ -354,6 +354,118 @@ class UIConfigSection(QtWidgets.QGroupBox):
         )
 
 
+class PromptCommandsSection(QtWidgets.QGroupBox):
+    """Section to manage prompt-based slash commands.
+
+    Provides a two-column table: Command (left) and System Prompt (right),
+    with Add/Remove and Save/Cancel handled by the parent config widget.
+    """
+
+    def __init__(self, settings: Settings, parent=None):
+        super().__init__("Prompt Commands", parent)
+        self.settings = settings
+        self.setup_ui()
+
+    def setup_ui(self):
+        layout = QtWidgets.QVBoxLayout(self)
+        layout.setSpacing(10)
+
+        # Helpful header/description
+        desc = QtWidgets.QLabel(
+            "Create and maintain slash commands for the chatbot.\n"
+            "- Command: unique, only letters, numbers, '-' or '_' (no spaces).\n"
+            "- System Prompt: instruction the AI will follow when you use /command.\n"
+            "Use them in chat like: /translate Hola como estás"
+        )
+        desc.setWordWrap(True)
+        desc.setProperty("class", "config-help-text")
+        layout.addWidget(desc)
+
+        # Table
+        self.table = QtWidgets.QTableWidget()
+        self.table.setColumnCount(3)
+        self.table.setHorizontalHeaderLabels(["Command", "System Prompt", "Description"])
+        self.table.horizontalHeader().setStretchLastSection(True)
+        self.table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(2, QtWidgets.QHeaderView.ResizeToContents)
+        self.table.setSelectionBehavior(QtWidgets.QAbstractItemView.SelectRows)
+        self.table.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+        self.table.setAlternatingRowColors(True)
+        self.table.setProperty("class", "prompt-commands-table")
+        layout.addWidget(self.table)
+
+        # Load data
+        self._load_from_settings()
+
+        # Bottom action bar
+        action_layout = QtWidgets.QHBoxLayout()
+        add_btn = QtWidgets.QPushButton("Add Command")
+        add_btn.clicked.connect(self.add_row)
+        remove_btn = QtWidgets.QPushButton("Remove Selected")
+        remove_btn.clicked.connect(self.remove_selected)
+        action_layout.addWidget(add_btn)
+        action_layout.addWidget(remove_btn)
+        action_layout.addStretch()
+        layout.addLayout(action_layout)
+
+    def _load_from_settings(self):
+        cmds = (self.settings.tools.prompt_commands or [])
+        self.table.setRowCount(len(cmds))
+        for r, item in enumerate(cmds):
+            name = item.get("name", "")
+            system_prompt = item.get("system_prompt", "")
+            description = item.get("description", "")
+
+            name_item = QtWidgets.QTableWidgetItem(name)
+            system_item = QtWidgets.QTableWidgetItem(system_prompt)
+            desc_item = QtWidgets.QTableWidgetItem(description)
+
+            # Slight UX helpers
+            name_item.setToolTip("Unique command name (e.g. translate, rewrite, shorter)")
+            system_item.setToolTip("System prompt used to instruct the AI for this command")
+            desc_item.setToolTip("Short description shown in the tool list")
+
+            self.table.setItem(r, 0, name_item)
+            self.table.setItem(r, 1, system_item)
+            self.table.setItem(r, 2, desc_item)
+
+    def add_row(self):
+        r = self.table.rowCount()
+        self.table.insertRow(r)
+        self.table.setItem(r, 0, QtWidgets.QTableWidgetItem("new_command"))
+        self.table.setItem(r, 1, QtWidgets.QTableWidgetItem("Describe what the AI should do..."))
+        self.table.setItem(r, 2, QtWidgets.QTableWidgetItem("Short description"))
+        self.table.editItem(self.table.item(r, 0))
+
+    def remove_selected(self):
+        row = self.table.currentRow()
+        if row >= 0:
+            self.table.removeRow(row)
+
+    def get_prompt_commands(self) -> list:
+        """Collect table entries into a list of dicts suitable for saving."""
+        import re as _re
+        rows = []
+        seen = set()
+        for r in range(self.table.rowCount()):
+            name = (self.table.item(r, 0).text() if self.table.item(r, 0) else "").strip().lower()
+            system_prompt = (self.table.item(r, 1).text() if self.table.item(r, 1) else "").strip()
+            description = (self.table.item(r, 2).text() if self.table.item(r, 2) else "").strip()
+            if not name or not system_prompt:
+                continue
+            if not _re.match(r"^[A-Za-z0-9_-]+$", name):
+                continue
+            if name in seen:
+                continue
+            seen.add(name)
+            rows.append({
+                "name": name,
+                "description": description or name,
+                "system_prompt": system_prompt,
+            })
+        return rows
+
 class ConfigWidget(QtWidgets.QWidget):
     """Main configuration widget."""
     
@@ -442,6 +554,8 @@ class ConfigWidget(QtWidgets.QWidget):
         settings_layout.addWidget(self.ui_section)
         # Live theme preview: update styles immediately when theme changes
         self.ui_section.theme_combo.currentTextChanged.connect(self.on_theme_combo_changed)
+
+        # Prompt Commands editor moved into the dedicated tool UI
         
         settings_layout.addStretch()
         
@@ -541,12 +655,11 @@ class ConfigWidget(QtWidgets.QWidget):
         """Save the current settings."""
         try:
             # Get settings from sections
-            new_settings = Settings(
-                ai=self.ai_section.get_settings(),
-                hotkeys=self.hotkey_section.get_settings(),
-                ui=self.ui_section.get_settings(),
-                tools=self.settings.tools  # Keep existing tool settings
-            )
+            # Start with current settings as base to preserve all fields
+            new_settings = Settings.from_dict(self.settings.to_dict())
+            new_settings.ai = self.ai_section.get_settings()
+            new_settings.hotkeys = self.hotkey_section.get_settings()
+            new_settings.ui = self.ui_section.get_settings()
             # Basic validation for AI settings when enabled
             ai_settings = new_settings.ai
             if ai_settings.enabled:

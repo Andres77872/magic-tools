@@ -204,11 +204,11 @@ class AIManager:
         """
         messages = []
 
-        # Add system message with context if provided
+        # Add system message with provided context/system prompt if any
         if context:
             messages.append({
                 "role": "system",
-                "content": f"Context: {context}"
+                "content": context
             })
 
         # Add conversation history (last 10 messages to avoid token limits)

@@ -364,11 +364,12 @@ class AIChatWidget(QtWidgets.QWidget):
     back_to_launcher = pyqtSignal()
     close_requested = pyqtSignal()
     
-    def __init__(self, ai_manager: AIManager, parent=None):
+    def __init__(self, ai_manager: AIManager, parent=None, tool_manager=None):
         super().__init__(parent)
         
         self.logger = logging.getLogger(__name__)
         self.ai_manager = ai_manager
+        self.tool_manager = tool_manager
         self.ui_settings = None
         
         # Initialize style manager
@@ -567,15 +568,59 @@ How can I help you today?"""
             self.show_status("AI is not available. Please check your configuration.")
             self._set_streaming_ui(False)
             return
-        
-        # Add message to chat
-        user_message = AIMessage(role="user", content=message)
+
+        # Slash command handling: /command text -> use system prompt from Prompt Commands tool
+        context_prompt = ""
+        outgoing_text = message
+        try:
+            if message.startswith('/'):
+                parts = message[1:].strip().split(None, 1)
+                command = parts[0] if parts else ""
+                content_after = parts[1] if len(parts) > 1 else ""
+
+                # Validate command per specification (letters, numbers, hyphen, underscore)
+                import re as _re
+                if not command or not _re.match(r"^[A-Za-z0-9_-]+$", command):
+                    self.show_status("Invalid command. Use letters, numbers, '-' or '_' only.")
+                    return
+
+                # Obtain PromptCommands tool if available
+                prompt_tool = None
+                try:
+                    if self.tool_manager:
+                        prompt_tool = self.tool_manager.get_tool("prompt_commands")
+                except Exception as e:
+                    self.logger.error(f"Error accessing prompt commands tool: {e}")
+
+                if not prompt_tool or not hasattr(prompt_tool, 'get_system_prompt'):
+                    self.show_status("Prompt commands tool not available.")
+                    return
+
+                system_prompt = prompt_tool.get_system_prompt(command)
+                if not system_prompt:
+                    self.show_status(f"Unknown command: /{command}")
+                    return
+
+                if not content_after.strip():
+                    self.show_status("Please provide text after the command, e.g. /translate Hola…")
+                    return
+
+                context_prompt = system_prompt
+                outgoing_text = content_after.strip()
+        except Exception as e:
+            self.logger.error(f"Slash command handling error: {e}")
+            # Fallback to raw message
+            context_prompt = ""
+            outgoing_text = message
+
+        # Add (possibly transformed) user text to chat
+        user_message = AIMessage(role="user", content=outgoing_text)
         self.add_message_to_chat(user_message)
-        
-        # Send message to AI in a separate thread
-        self.send_to_ai(message)
+
+        # Send message to AI in a separate thread, passing the system prompt if any
+        self.send_to_ai(outgoing_text, context=context_prompt)
     
-    def send_to_ai(self, message: str):
+    def send_to_ai(self, message: str, context: str = ""):
         """Send message to AI in a separate thread."""
         # Prepare UI for streaming (non-blocking input, send->cancel)
         self._set_streaming_ui(True)
@@ -602,7 +647,7 @@ How can I help you today?"""
                 pass
         
         # Create and start worker thread
-        self.current_worker = AIWorker(self.ai_manager, message)
+        self.current_worker = AIWorker(self.ai_manager, message, context=context)
         # Enable streaming mode
         self.current_worker.streaming = True
         self.current_worker.response_received.connect(self.on_ai_response)

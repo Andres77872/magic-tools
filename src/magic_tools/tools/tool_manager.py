@@ -33,13 +33,20 @@ class ToolManager:
         try:
             builtin_tools = BuiltinTools()
             tool_classes = builtin_tools.get_tool_classes()
-            
+
+            # Ensure the prompt_commands tool is enabled by default if present
+            # so that it appears in the UI and is available for slash commands.
+            if "prompt_commands" in tool_classes and "prompt_commands" not in self.settings.enabled_tools:
+                self.settings.enabled_tools.append("prompt_commands")
+                self.logger.info("Enabled built-in tool by default: prompt_commands")
+
+            # Register all tool classes so they are discoverable even if disabled
             for tool_name, tool_class in tool_classes.items():
+                self.register_tool_class(tool_name, tool_class)
                 if tool_name in self.settings.enabled_tools:
-                    self.register_tool_class(tool_name, tool_class)
                     self.logger.info(f"Loaded built-in tool: {tool_name}")
-            
-            self.logger.info(f"Loaded {len(tool_classes)} built-in tools")
+
+            self.logger.info(f"Discovered {len(tool_classes)} built-in tools")
             
         except Exception as e:
             self.logger.error(f"Failed to load built-in tools: {e}")
@@ -116,6 +123,13 @@ class ToolManager:
         try:
             tool_class = self.tool_classes[name]
             tool_instance = tool_class()
+            # If this is the prompt commands tool, ensure it reflects current settings.
+            if name == "prompt_commands":
+                try:
+                    # The tool loads from settings on init; nothing more to do here.
+                    pass
+                except Exception as e:
+                    self.logger.warning(f"Could not apply settings to prompt_commands: {e}")
             self.tools[name] = tool_instance
             self.logger.info(f"Instantiated tool: {name}")
             return tool_instance

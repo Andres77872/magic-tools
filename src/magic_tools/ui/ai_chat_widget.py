@@ -437,6 +437,13 @@ class AIChatWidget(QtWidgets.QWidget):
         self.streaming_message_widget = None
         self._cancel_in_progress = False
         self._autoscroll_pinned = True
+        # Slash-command UX state
+        self.selected_command = None  # type: Optional[str]
+        self.command_popup = None
+        self.suggestion_list = None
+        self.command_badge = None
+        self.command_badge_label = None
+        self.command_badge_close = None
         
         # Setup UI
         self.setup_ui()
@@ -531,6 +538,36 @@ class AIChatWidget(QtWidgets.QWidget):
         input_layout.setContentsMargins(0, 0, 0, 0)
         input_layout.setSpacing(8)
         
+        # Input container to host badge + input
+        self.input_container = QtWidgets.QFrame()
+        self.input_container.setFrameShape(QtWidgets.QFrame.NoFrame)
+        container_layout = QtWidgets.QHBoxLayout(self.input_container)
+        container_layout.setContentsMargins(0, 0, 0, 0)
+        container_layout.setSpacing(6)
+
+        # Command badge (hidden until a command is selected)
+        self.command_badge = QtWidgets.QFrame()
+        self.command_badge.setFrameShape(QtWidgets.QFrame.NoFrame)
+        self.command_badge.setProperty("class", "chat-command-badge")
+        self.command_badge.setFixedHeight(28)  # Set fixed height for consistent appearance
+        badge_layout = QtWidgets.QHBoxLayout(self.command_badge)
+        badge_layout.setContentsMargins(8, 4, 6, 4)
+        badge_layout.setSpacing(4)
+        
+        self.command_badge_label = QtWidgets.QLabel("")
+        self.command_badge_label.setProperty("class", "chat-command-badge-label")
+        self.command_badge_label.setAlignment(Qt.AlignCenter)
+        
+        self.command_badge_close = QtWidgets.QToolButton()
+        self.command_badge_close.setText("×")
+        self.command_badge_close.setCursor(Qt.PointingHandCursor)
+        self.command_badge_close.setProperty("class", "chat-command-badge-close")
+        self.command_badge_close.setFixedSize(16, 16)
+        
+        badge_layout.addWidget(self.command_badge_label)
+        badge_layout.addWidget(self.command_badge_close)
+        self.command_badge.hide()
+
         # Input field (multi-line)
         self.input_field = QtWidgets.QTextEdit()
         self.input_field.setAcceptRichText(False)
@@ -540,8 +577,12 @@ class AIChatWidget(QtWidgets.QWidget):
         default_h = int(3 * fm.lineSpacing() + 12)
         self.input_field.setFixedHeight(max(36, default_h))
         self.input_field.setProperty("class", "chat-input")
+        self.input_field.textChanged.connect(self._on_input_text_changed)
         self.input_field.textChanged.connect(self._update_input_height)
         self.input_field.installEventFilter(self)
+
+        container_layout.addWidget(self.command_badge, 0)
+        container_layout.addWidget(self.input_field, 1)
         
         # Send button
         self.send_button = QtWidgets.QPushButton("Send")
@@ -549,10 +590,16 @@ class AIChatWidget(QtWidgets.QWidget):
         self.send_button.clicked.connect(self.send_message)
         self.send_button.setProperty("class", "chat-send-button")
         
-        input_layout.addWidget(self.input_field, 1)
+        input_layout.addWidget(self.input_container, 1)
         input_layout.addWidget(self.send_button, 0)
         
         self.main_layout.addLayout(input_layout)
+
+        # Build the non-blocking command suggestion popup (hidden by default)
+        self._build_command_popup()
+
+        # Badge clear handler
+        self.command_badge_close.clicked.connect(self.clear_selected_command)
     
     def setup_status_bar(self):
         """Setup the status bar."""
@@ -576,6 +623,9 @@ class AIChatWidget(QtWidgets.QWidget):
     
     def apply_styles(self):
         """Apply styles using the StyleManager."""
+        # Get the current theme from ui_settings if available
+        current_theme = self.ui_settings.theme if self.ui_settings else "dark"
+        self.style_manager.set_theme(current_theme)
         self.style_manager.apply_styles_to_widget(self, components=['chat'])
     
     def setup_signals(self):
@@ -619,21 +669,12 @@ How can I help you today?"""
             self._set_streaming_ui(False)
             return
 
-        # Slash command handling: /command text -> use system prompt from Prompt Commands tool
+        # Command badge handling: if a command was explicitly selected, apply it; otherwise treat as plain text
         context_prompt = ""
         outgoing_text = message
+        badge = ""
         try:
-            if message.startswith('/'):
-                parts = message[1:].strip().split(None, 1)
-                command = parts[0] if parts else ""
-                content_after = parts[1] if len(parts) > 1 else ""
-
-                # Validate command per specification (letters, numbers, hyphen, underscore)
-                import re as _re
-                if not command or not _re.match(r"^[A-Za-z0-9_-]+$", command):
-                    self.show_status("Invalid command. Use letters, numbers, '-' or '_' only.")
-                    return
-
+            if self.selected_command:
                 # Obtain PromptCommands tool if available
                 prompt_tool = None
                 try:
@@ -643,34 +684,28 @@ How can I help you today?"""
                     self.logger.error(f"Error accessing prompt commands tool: {e}")
 
                 if not prompt_tool or not hasattr(prompt_tool, 'get_system_prompt'):
-                    self.show_status("Prompt commands tool not available.")
-                    return
-
-                system_prompt = prompt_tool.get_system_prompt(command)
-                if not system_prompt:
-                    self.show_status(f"Unknown command: /{command}")
-                    return
-
-                if not content_after.strip():
-                    self.show_status("Please provide text after the command, e.g. /translate Hola…")
-                    return
-
-                context_prompt = system_prompt
-                outgoing_text = content_after.strip()
-                badge = f"/{command}"
+                    # Fallback: send as plain text
+                    self.show_status("Prompt commands tool not available. Sending as plain text.")
+                else:
+                    system_prompt = prompt_tool.get_system_prompt(self.selected_command)
+                    if not system_prompt:
+                        # Unknown command; clear and send as plain text
+                        self.clear_selected_command()
+                    else:
+                        context_prompt = system_prompt
+                        badge = f"/{self.selected_command}"
         except Exception as e:
-            self.logger.error(f"Slash command handling error: {e}")
-            # Fallback to raw message
-            context_prompt = ""
-            outgoing_text = message
-            badge = ""
+            self.logger.error(f"Command badge handling error: {e}")
 
         # Add (possibly transformed) user text to chat
-        user_message = AIMessage(role="user", content=outgoing_text, badge=badge if 'badge' in locals() else "")
+        user_message = AIMessage(role="user", content=outgoing_text, badge=badge)
         self.add_message_to_chat(user_message)
 
         # Send message to AI in a separate thread, passing the system prompt if any
         self.send_to_ai(outgoing_text, context=context_prompt)
+
+        # Clear command selection after send
+        self.clear_selected_command()
     
     def send_to_ai(self, message: str, context: str = ""):
         """Send message to AI in a separate thread."""
@@ -975,13 +1010,30 @@ How can I help you today?"""
                         w.set_bubble_width_limits(min_target, max_target)
         except Exception:
             pass
+        # Reposition command popup if visible
+        try:
+            if self.command_popup and self.command_popup.isVisible():
+                self._position_command_popup()
+        except Exception:
+            pass
 
     def eventFilter(self, source, event):
         """Intercept Enter in input to send or create newline."""
         if source is self.input_field and event.type() == QtCore.QEvent.KeyPress:
+            # Handle suggestion navigation without stealing focus
+            if self.command_popup and self.command_popup.isVisible():
+                if event.key() in (Qt.Key_Up, Qt.Key_Down):
+                    self._move_suggestion_selection(-1 if event.key() == Qt.Key_Up else 1)
+                    return True
+                if event.key() in (Qt.Key_Tab, Qt.Key_Return, Qt.Key_Enter):
+                    if self._accept_current_suggestion():
+                        return True
+                if event.key() == Qt.Key_Escape:
+                    self._hide_command_popup()
+                    return True
+            # Normal Enter handling
             if event.key() in (Qt.Key_Return, Qt.Key_Enter):
                 if self.is_waiting_for_response:
-                    # Ignore Enter while streaming to avoid accidental cancel
                     return True
                 if event.modifiers() & Qt.ShiftModifier:
                     cursor = self.input_field.textCursor()
@@ -989,6 +1041,12 @@ How can I help you today?"""
                     return True
                 else:
                     self.send_message()
+                    return True
+            # If Backspace at start and no text, remove badge
+            if event.key() == Qt.Key_Backspace:
+                cursor = self.input_field.textCursor()
+                if not cursor.hasSelection() and cursor.position() == 0 and self.selected_command:
+                    self.clear_selected_command()
                     return True
         # When the viewport resizes, adjust bubbles
         if source is self.chat_scroll.viewport() and event.type() in (QtCore.QEvent.Resize, QtCore.QEvent.Show):
@@ -1020,5 +1078,220 @@ How can I help you today?"""
             self.input_field.setFixedHeight(max(36, height))
         except Exception:
             pass
+
+    # -----------------------------
+    # Slash Command Suggestion UX
+    # -----------------------------
+    def _build_command_popup(self):
+        try:
+            # Create popup as child of main widget for proper positioning
+            self.command_popup = QtWidgets.QFrame(self)
+            self.command_popup.setFrameShape(QtWidgets.QFrame.NoFrame)
+            self.command_popup.setProperty("class", "chat-command-popup")
+            
+            # Set window flags to make it a floating popup that doesn't steal focus
+            self.command_popup.setWindowFlags(Qt.Tool | Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+            self.command_popup.setAttribute(Qt.WA_ShowWithoutActivating, True)
+            
+            popup_layout = QtWidgets.QVBoxLayout(self.command_popup)
+            popup_layout.setContentsMargins(2, 2, 2, 2)
+            popup_layout.setSpacing(0)
+            
+            self.suggestion_list = QtWidgets.QListWidget(self.command_popup)
+            self.suggestion_list.setProperty("class", "chat-command-list")
+            self.suggestion_list.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+            self.suggestion_list.setVerticalScrollBarPolicy(Qt.ScrollBarAsNeeded)
+            self.suggestion_list.setSelectionMode(QtWidgets.QAbstractItemView.SingleSelection)
+            self.suggestion_list.setFocusPolicy(Qt.NoFocus)
+            
+            popup_layout.addWidget(self.suggestion_list)
+            self.command_popup.hide()
+
+            # Mouse selection
+            self.suggestion_list.itemClicked.connect(lambda _: self._accept_current_suggestion())
+        except Exception as e:
+            self.logger.error(f"Failed to build command popup: {e}")
+
+    def _position_command_popup(self):
+        try:
+            if not self.command_popup:
+                return
+            
+            # Position directly under the input field using global coordinates
+            input_g = self.input_field.geometry()
+            
+            # Map input field position to global coordinates
+            global_pos = self.input_field.mapToGlobal(QtCore.QPoint(0, 0))
+            
+            x = global_pos.x()
+            y = global_pos.y() + input_g.height() + 4  # Position below the input field
+            width = input_g.width()  # Match input field width
+            
+            self.command_popup.setFixedWidth(width)
+            
+            # Calculate height based on number of items (max 8 visible items)
+            item_count = self.suggestion_list.count()
+            if item_count > 0:
+                row_height = max(28, self.suggestion_list.sizeHintForRow(0) or 28)
+                visible_rows = min(8, item_count)
+                popup_height = visible_rows * row_height + 8  # +8 for borders and margins
+                self.command_popup.setFixedHeight(popup_height)
+            else:
+                self.command_popup.setFixedHeight(50)
+            
+            self.command_popup.move(x, y)
+        except Exception as e:
+            self.logger.error(f"Error positioning command popup: {e}")
+
+    def _show_command_popup(self, items):
+        try:
+            if not self.command_popup:
+                return
+            self.suggestion_list.clear()
+            for name, desc in items:
+                it = QtWidgets.QListWidgetItem(f"/{name}  —  {desc}")
+                it.setData(Qt.UserRole, name)
+                self.suggestion_list.addItem(it)
+            if self.suggestion_list.count() > 0:
+                self.suggestion_list.setCurrentRow(0)
+            
+            # Apply current theme styles to the popup
+            self.apply_styles()
+            
+            self._position_command_popup()
+            self.command_popup.show()
+        except Exception as e:
+            self.logger.error(f"Failed to show command popup: {e}")
+
+    def _hide_command_popup(self):
+        try:
+            if self.command_popup:
+                self.command_popup.hide()
+        except Exception:
+            pass
+
+    def _move_suggestion_selection(self, delta: int):
+        try:
+            if not (self.suggestion_list and self.suggestion_list.count()):
+                return
+            row = self.suggestion_list.currentRow()
+            row = (row + delta) % self.suggestion_list.count()
+            self.suggestion_list.setCurrentRow(row)
+        except Exception:
+            pass
+
+    def _accept_current_suggestion(self) -> bool:
+        try:
+            if not (self.command_popup and self.command_popup.isVisible() and self.suggestion_list):
+                return False
+            item = self.suggestion_list.currentItem()
+            if not item:
+                return False
+            name = item.data(Qt.UserRole)
+            if not name:
+                return False
+            # Set command selection and update input
+            self._set_selected_command(name)
+            self._hide_command_popup()
+            return True
+        except Exception:
+            return False
+
+    def _set_selected_command(self, name: str):
+        try:
+            normalized = (name or "").strip()
+            if not normalized:
+                return
+            self.selected_command = normalized
+            # Update badge
+            if self.command_badge_label:
+                self.command_badge_label.setText(f"/{normalized}")
+            if self.command_badge:
+                self.command_badge.show()
+                # Ensure proper sizing
+                self.command_badge.adjustSize()
+            # Remove any leading '/token' + optional space from the input text
+            text = self.input_field.toPlainText()
+            if text.startswith('/'):
+                import re as _re
+                new_text = _re.sub(r"^/\S+\s*", "", text, count=1)
+                self.input_field.blockSignals(True)
+                self.input_field.setPlainText(new_text)
+                self.input_field.blockSignals(False)
+                # Move cursor to end
+                cursor = self.input_field.textCursor()
+                cursor.movePosition(QtGui.QTextCursor.End)
+                self.input_field.setTextCursor(cursor)
+            # Focus back to input
+            self.input_field.setFocus()
+        except Exception as e:
+            self.logger.error(f"Failed to set selected command: {e}")
+
+    def clear_selected_command(self):
+        try:
+            self.selected_command = None
+            if self.command_badge:
+                self.command_badge.hide()
+        except Exception:
+            pass
+
+    def _on_input_text_changed(self):
+        try:
+            # Keep height updated (already connected, but ensure smoothness)
+            # Manage suggestion popup only when no command is already set
+            if self.selected_command:
+                self._hide_command_popup()
+                return
+
+            raw = self.input_field.toPlainText()
+            if not raw:
+                self._hide_command_popup()
+                return
+
+            # Consider only first line and first token
+            first_line = raw.split('\n', 1)[0]
+            if not first_line.startswith('/'):
+                self._hide_command_popup()
+                return
+
+            # Extract token after '/'
+            import re as _re
+            m = _re.match(r"/(\S+)", first_line)
+            token = m.group(1) if m else ""
+            # If there's a space in first token, user ended token without selection -> plain text
+            if ' ' in first_line:
+                # If user typed a space after /something and didn't select, hide suggestions
+                if _re.match(r"^/\S+\s", first_line):
+                    self._hide_command_popup()
+                    return
+
+            # Build suggestions based on token prefix
+            prompt_tool = None
+            try:
+                if self.tool_manager:
+                    prompt_tool = self.tool_manager.get_tool("prompt_commands")
+            except Exception as e:
+                self.logger.error(f"Error accessing prompt commands tool: {e}")
+                prompt_tool = None
+
+            if not prompt_tool or not hasattr(prompt_tool, 'list_commands'):
+                self._hide_command_popup()
+                return
+
+            all_cmds = getattr(prompt_tool, 'list_commands')() or []
+            # Get descriptions for display
+            items = []
+            for name in all_cmds:
+                if not token or name.startswith(token.lower()):
+                    desc = getattr(prompt_tool, 'get_description')(name) or name
+                    items.append((name, desc))
+            items = sorted(items, key=lambda x: x[0])[:10]
+
+            if items:
+                self._show_command_popup(items)
+            else:
+                self._hide_command_popup()
+        except Exception as e:
+            self.logger.error(f"Input change handler error: {e}")
     
     # NOTE: Removed stray top-level duplicates accidentally introduced earlier.

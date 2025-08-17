@@ -247,3 +247,129 @@
 .light-theme QPushButton[class="chat-clear-button"]:hover {
     background-color: rgba(200, 60, 60, 200);
 }
+
+/* ===================== */
+/* Slash Command Suggest */
+/* ===================== */
+/* Popup container */
+.dark-theme QFrame[class="chat-command-popup"] {
+    background: rgba(40, 40, 40, 240);
+    border: 2px solid #555555;
+    border-radius: 8px;
+}
+
+.light-theme QFrame[class="chat-command-popup"] {
+    background: rgba(250, 250, 250, 240);
+    border: 2px solid #cccccc;
+    border-radius: 8px;
+}
+
+/* List widget styling */
+.dark-theme QListWidget[class="chat-command-list"] {
+    background: transparent;
+    outline: none;
+    border: none;
+    color: #ffffff;
+    font-size: 13px;
+}
+
+.light-theme QListWidget[class="chat-command-list"] {
+    background: transparent;
+    outline: none;
+    border: none;
+    color: #333333;
+    font-size: 13px;
+}
+
+/* List items */
+.dark-theme QListWidget[class="chat-command-list"]::item {
+    color: #ffffff;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(85, 85, 85, 0.3);
+}
+
+.dark-theme QListWidget[class="chat-command-list"]::item:selected {
+    background: rgba(0, 122, 204, 0.4);
+    border-radius: 4px;
+}
+
+.dark-theme QListWidget[class="chat-command-list"]::item:hover {
+    background: rgba(70, 70, 70, 0.6);
+    border-radius: 4px;
+}
+
+.light-theme QListWidget[class="chat-command-list"]::item {
+    color: #333333;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(204, 204, 204, 0.3);
+}
+
+.light-theme QListWidget[class="chat-command-list"]::item:selected {
+    background: rgba(0, 122, 204, 0.2);
+    border-radius: 4px;
+}
+
+.light-theme QListWidget[class="chat-command-list"]::item:hover {
+    background: rgba(230, 230, 230, 0.8);
+    border-radius: 4px;
+}
+
+/* Command badge inside input */
+.dark-theme QFrame[class="chat-command-badge"] {
+    background: rgba(46, 204, 113, 0.8);
+    border: 1px solid #2ecc71;
+    border-radius: 14px;
+    min-width: 50px;
+    max-width: 120px;
+}
+
+.light-theme QFrame[class="chat-command-badge"] {
+    background: rgba(46, 204, 113, 0.15);
+    border: 1px solid #2ecc71;
+    border-radius: 14px;
+    min-width: 50px;
+    max-width: 120px;
+}
+
+.dark-theme QLabel[class="chat-command-badge-label"] {
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 0px 2px;
+}
+
+.light-theme QLabel[class="chat-command-badge-label"] {
+    color: #27ae60;
+    font-weight: bold;
+    font-size: 11px;
+    padding: 0px 2px;
+}
+
+/* Badge close button */
+.dark-theme QToolButton[class="chat-command-badge-close"] {
+    background: transparent;
+    border: none;
+    font-weight: bold;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    border-radius: 8px;
+}
+
+.dark-theme QToolButton[class="chat-command-badge-close"]:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.light-theme QToolButton[class="chat-command-badge-close"] {
+    background: transparent;
+    border: none;
+    font-weight: bold;
+    color: rgba(39, 174, 96, 0.8);
+    font-size: 12px;
+    border-radius: 8px;
+}
+
+.light-theme QToolButton[class="chat-command-badge-close"]:hover {
+    color: #27ae60;
+    background: rgba(46, 204, 113, 0.2);
+}

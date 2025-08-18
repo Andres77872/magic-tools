@@ -23,6 +23,7 @@ class HotkeySettings:
     """Hotkey configuration."""
     toggle_shortcut: str = "Ctrl+Space"
     ai_chat_shortcut: str = "Ctrl+Alt+A"
+    ai_chat_direct_shortcut: str = "Ctrl+Alt+Space"
     quick_search_shortcut: str = "Ctrl+Alt+S"
     focus_selected_shortcut: str = "Ctrl+Alt+F"
     hide_shortcut: str = "Escape"
@@ -114,8 +115,10 @@ class Settings:
             "hotkeys": {
                 "toggle_shortcut": self.hotkeys.toggle_shortcut,
                 "ai_chat_shortcut": self.hotkeys.ai_chat_shortcut,
+                "ai_chat_direct_shortcut": getattr(self.hotkeys, "ai_chat_direct_shortcut", "Ctrl+Alt+Space"),
                 "quick_search_shortcut": self.hotkeys.quick_search_shortcut,
                 "focus_selected_shortcut": self.hotkeys.focus_selected_shortcut,
+                "hide_shortcut": getattr(self.hotkeys, "hide_shortcut", "Escape"),
             },
             "ai": {
                 "provider": self.ai.provider,
@@ -157,8 +160,10 @@ class Settings:
             settings.hotkeys = HotkeySettings(
                 toggle_shortcut=hotkey_data.get("toggle_shortcut", settings.hotkeys.toggle_shortcut),
                 ai_chat_shortcut=hotkey_data.get("ai_chat_shortcut", settings.hotkeys.ai_chat_shortcut),
+                ai_chat_direct_shortcut=hotkey_data.get("ai_chat_direct_shortcut", getattr(settings.hotkeys, "ai_chat_direct_shortcut", "Ctrl+Alt+Space")),
                 quick_search_shortcut=hotkey_data.get("quick_search_shortcut", settings.hotkeys.quick_search_shortcut),
                 focus_selected_shortcut=hotkey_data.get("focus_selected_shortcut", settings.hotkeys.focus_selected_shortcut),
+                hide_shortcut=hotkey_data.get("hide_shortcut", getattr(settings.hotkeys, "hide_shortcut", "Escape")),
             )
         
         if "ai" in data:

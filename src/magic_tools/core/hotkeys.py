@@ -181,6 +181,7 @@ class GlobalHotkeyManager(QtCore.QObject):
     
     def register_default_hotkeys(self, toggle_shortcut: str = "Ctrl+Space", 
                                 ai_chat_shortcut: str = "Ctrl+Alt+A",
+                                ai_chat_direct_shortcut: str = "Ctrl+Alt+Space",
                                 quick_search_shortcut: str = "Ctrl+Alt+S",
                                 focus_selected_shortcut: str = "Ctrl+Alt+F",
                                 hide_shortcut: str = "Escape"):
@@ -198,8 +199,8 @@ class GlobalHotkeyManager(QtCore.QObject):
         # Additional shortcut to open AI chat directly with Ctrl+Alt+Space,
         # registered only if it's not already the configured AI chat shortcut.
         try:
-            if self._format_hotkey(ai_chat_shortcut) != self._format_hotkey("Ctrl+Alt+Space"):
-                self.register_hotkey('ai_chat_alt', "Ctrl+Alt+Space", lambda: self.ai_chat_requested.emit())
+            if self._format_hotkey(ai_chat_shortcut) != self._format_hotkey(ai_chat_direct_shortcut):
+                self.register_hotkey('ai_chat_alt', ai_chat_direct_shortcut, lambda: self.ai_chat_requested.emit())
         except Exception:
             # Non-fatal if alternate hotkey cannot be registered on some platforms
             pass

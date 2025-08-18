@@ -140,6 +140,7 @@ class MagicToolsApp(QtWidgets.QApplication):
         self.hotkey_manager.register_default_hotkeys(
             toggle_shortcut=hotkey_settings.toggle_shortcut,
             ai_chat_shortcut=hotkey_settings.ai_chat_shortcut,
+            ai_chat_direct_shortcut=getattr(hotkey_settings, 'ai_chat_direct_shortcut', 'Ctrl+Alt+Space'),
             quick_search_shortcut=hotkey_settings.quick_search_shortcut,
             hide_shortcut=hotkey_settings.hide_shortcut
         )
@@ -149,6 +150,11 @@ class MagicToolsApp(QtWidgets.QApplication):
         hotkey_settings = self.settings.hotkeys
         self.hotkey_manager.update_hotkey('toggle', hotkey_settings.toggle_shortcut)
         self.hotkey_manager.update_hotkey('ai_chat', hotkey_settings.ai_chat_shortcut)
+        # Sync the direct chat shortcut
+        try:
+            self.hotkey_manager.update_hotkey('ai_chat_alt', getattr(hotkey_settings, 'ai_chat_direct_shortcut', 'Ctrl+Alt+Space'))
+        except Exception:
+            pass
         self.hotkey_manager.update_hotkey('quick_search', hotkey_settings.quick_search_shortcut)
         self.hotkey_manager.update_hotkey('hide', hotkey_settings.hide_shortcut)
     

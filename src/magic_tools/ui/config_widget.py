@@ -185,6 +185,14 @@ class HotkeyConfigSection(QtWidgets.QGroupBox):
         self.ai_chat_edit = self.create_shortcut_edit(self.hotkey_settings.ai_chat_shortcut)
         layout.addRow("AI Chat:", self.ai_chat_edit)
         
+        # AI chat direct shortcut (open chatbot directly)
+        try:
+            current_ai_direct = getattr(self.hotkey_settings, 'ai_chat_direct_shortcut', 'Ctrl+Alt+Space')
+        except Exception:
+            current_ai_direct = 'Ctrl+Alt+Space'
+        self.ai_chat_direct_edit = self.create_shortcut_edit(current_ai_direct)
+        layout.addRow("AI Chat (Direct):", self.ai_chat_direct_edit)
+        
         # Quick search shortcut
         self.quick_search_edit = self.create_shortcut_edit(self.hotkey_settings.quick_search_shortcut)
         layout.addRow("Quick Search:", self.quick_search_edit)
@@ -207,7 +215,7 @@ class HotkeyConfigSection(QtWidgets.QGroupBox):
         
         # Help text
         help_label = QtWidgets.QLabel(
-            "Use combinations like: Ctrl+Space, Alt+A, Ctrl+Alt+S\n"
+            "Use combinations like: Ctrl+Space, Alt+A, Ctrl+Alt+S, Ctrl+Alt+Space\n"
             "Supported modifiers: Ctrl, Alt, Shift, Meta"
         )
         help_label.setWordWrap(True)
@@ -285,6 +293,7 @@ class HotkeyConfigSection(QtWidgets.QGroupBox):
         return HotkeySettings(
             toggle_shortcut=self.toggle_edit.text(),
             ai_chat_shortcut=self.ai_chat_edit.text(),
+            ai_chat_direct_shortcut=getattr(self, 'ai_chat_direct_edit', None).text() if hasattr(self, 'ai_chat_direct_edit') else getattr(self.hotkey_settings, 'ai_chat_direct_shortcut', 'Ctrl+Alt+Space'),
             quick_search_shortcut=self.quick_search_edit.text(),
             focus_selected_shortcut=getattr(self, 'focus_selected_edit', None).text() if hasattr(self, 'focus_selected_edit') else self.hotkey_settings.focus_selected_shortcut,
             hide_shortcut=getattr(self, 'hide_edit', None).text() if hasattr(self, 'hide_edit') else getattr(self.hotkey_settings, 'hide_shortcut', 'Escape')

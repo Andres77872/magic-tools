@@ -193,7 +193,7 @@ class ChatManagerWidget(QtWidgets.QDialog):
             self.current_chat_id = None
     
     def create_new_chat(self):
-        """Create a new chat."""
+        """Create a new chat (keep in memory until first message)."""
         try:
             name, ok = QtWidgets.QInputDialog.getText(
                 self, "New Chat", "Enter chat name:", 
@@ -201,18 +201,27 @@ class ChatManagerWidget(QtWidgets.QDialog):
             )
             
             if ok and name.strip():
-                chat = self.chat_storage.create_chat(name.strip())
-                self.refresh_chat_list()
-                
-                # Ask if user wants to switch to the new chat
+                # Do not create/persist here. Just instruct the main widget to start a new chat.
                 reply = QtWidgets.QMessageBox.question(
-                    self, "New Chat Created", 
-                    f"Chat '{name}' created successfully.\n\nDo you want to switch to this chat now?",
+                    self, "Start New Chat", 
+                    f"Start a new chat named '{name}' now? It will be saved after you send the first message.",
                     QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No
                 )
-                
                 if reply == QtWidgets.QMessageBox.Yes:
-                    self.chat_selected.emit(chat)
+                    # Emit a temporary in-memory Chat object so the main widget can set the label.
+                    # It won't be persisted until the first message is sent.
+                    temp_chat = Chat(
+                        metadata=ChatMetadata(
+                            id="",  # placeholder; real id will be assigned on create/save
+                            name=name.strip(),
+                            created_at=0.0,
+                            updated_at=0.0,
+                            message_count=0,
+                            last_message_preview="",
+                        ),
+                        messages=[]
+                    )
+                    self.chat_selected.emit(temp_chat)
                     self.close()
                     
         except Exception as e:

@@ -773,9 +773,50 @@ How can I help you today?"""
         except Exception as e:
             self.logger.error(f"Command badge handling error: {e}")
 
-        # Add (possibly transformed) user text to chat
+        # Add (possibly transformed) user text to chat/UI and history
         user_message = AIMessage(role="user", content=outgoing_text, badge=badge, timestamp=time.time())
         self.add_message_to_chat(user_message)
+        try:
+            # Ensure the AI conversation history includes the just-sent user message
+            if not self.ai_manager.conversation_history or \
+               self.ai_manager.conversation_history[-1].role != "user" or \
+               self.ai_manager.conversation_history[-1].content != outgoing_text:
+                self.ai_manager.conversation_history.append(user_message)
+        except Exception:
+            pass
+
+        # Ensure a chat exists; create on first user message (not before)
+        if self.chat_storage:
+            try:
+                needs_creation = (
+                    self.current_chat is None or
+                    not getattr(self.current_chat.metadata, "id", None)
+                )
+                if needs_creation:
+                    # Preserve any preselected name (from manager) if available
+                    desired_name = None
+                    try:
+                        if self.current_chat and getattr(self.current_chat, "metadata", None):
+                            desired_name = self.current_chat.metadata.name
+                        if (not desired_name) and hasattr(self, "chat_name_label"):
+                            label_text = self.chat_name_label.text().strip()
+                            if label_text and label_text.lower() != "new chat":
+                                desired_name = label_text
+                    except Exception:
+                        pass
+                    created = self.chat_storage.create_chat(name=desired_name, persist=False)
+                    self.current_chat = created
+                    # Update UI name
+                    self.chat_name_label.setText(self.current_chat.metadata.name)
+                    self._update_modified_indicator()
+            except Exception as e:
+                self.logger.error(f"Failed to create chat on first message: {e}")
+
+        # Save after sending the user message (always)
+        try:
+            self.save_current_chat()
+        except Exception as e:
+            self.logger.error(f"Auto-save after user send failed: {e}")
 
         # Send message to AI in a separate thread, passing the system prompt if any
         self.send_to_ai(outgoing_text, context=context_prompt)
@@ -839,6 +880,13 @@ How can I help you today?"""
             # Update status
             tokens_info = f"({response.tokens_used} tokens)" if response.tokens_used else ""
             self.show_status(f"Response received {tokens_info}")
+
+            # Save only if there is content
+            try:
+                if response.content and response.content.strip():
+                    self.save_current_chat()
+            except Exception as e:
+                self.logger.error(f"Auto-save after assistant response failed: {e}")
         else:
             self.show_status(f"Error: {response.error}")
             
@@ -900,6 +948,16 @@ How can I help you today?"""
         # Clear reference so next stream creates a new bubble
         self.streaming_message_widget = None
         self._cancel_in_progress = False
+
+        # Save only if the last assistant message has content
+        try:
+            history = self.ai_manager.get_conversation_history()
+            if history:
+                last = history[-1]
+                if last.role == "assistant" and last.content and last.content.strip():
+                    self.save_current_chat()
+        except Exception as e:
+            self.logger.error(f"Auto-save after streaming finished failed: {e}")
 
     def cancel_stream(self):
         """Cancel the current streaming response."""
@@ -1063,14 +1121,17 @@ How can I help you today?""":
                 if not self.save_current_chat():
                     return  # Save failed, don't proceed
         
-        # Create new chat
+        # Start a fresh UI state without creating/persisting any chat yet.
+        # Actual chat creation will happen on the first user message.
         try:
-            new_chat = self.chat_storage.create_chat()
-            self.load_chat(new_chat)
-            self.show_status("New chat created")
+            self.clear_chat(skip_confirmation=True)
+            self.current_chat = None
+            self.chat_name_label.setText("New Chat")
+            self._update_modified_indicator()
+            self.show_status("New chat started")
         except Exception as e:
-            self.logger.error(f"Failed to create new chat: {e}")
-            QtWidgets.QMessageBox.warning(self, "Error", f"Failed to create new chat: {str(e)}")
+            self.logger.error(f"Failed to start new chat: {e}")
+            QtWidgets.QMessageBox.warning(self, "Error", f"Failed to start new chat: {str(e)}")
     
     def save_current_chat(self) -> bool:
         """Save the current chat conversation."""

@@ -138,11 +138,13 @@ class ChatStorageManager:
         safe_id = hashlib.sha256(chat_id.encode()).hexdigest()[:16]
         return f"chat_{safe_id}.json"
     
-    def create_chat(self, name: str = None) -> Chat:
+    def create_chat(self, name: str = None, persist: bool = False) -> Chat:
         """Create a new chat conversation.
         
         Args:
             name: Optional name for the chat
+            persist: If True, immediately add to index and persist metadata. If False,
+                     keep only in memory until explicitly saved.
             
         Returns:
             New chat instance
@@ -162,11 +164,13 @@ class ChatStorageManager:
         
         chat = Chat(metadata=metadata)
         
-        # Add to index
-        self._chat_index[chat_id] = metadata
-        self._save_index()
-        
-        self.logger.info(f"Created new chat: {chat_id}")
+        # Optionally persist immediately; otherwise defer until first save
+        if persist:
+            self._chat_index[chat_id] = metadata
+            self._save_index()
+            self.logger.info(f"Created new chat: {chat_id}")
+        else:
+            self.logger.info(f"Created new chat (in-memory): {chat_id}")
         return chat
     
     def save_chat(self, chat: Chat) -> bool:
@@ -179,6 +183,11 @@ class ChatStorageManager:
             True if saved successfully
         """
         try:
+            # Avoid persisting completely empty chats (no messages)
+            if not chat.messages:
+                self.logger.info(f"Skip saving empty chat: {chat.metadata.id}")
+                return False
+
             # Update metadata
             chat.metadata.updated_at = time.time()
             chat.metadata.message_count = len(chat.messages)

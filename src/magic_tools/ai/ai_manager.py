@@ -134,7 +134,12 @@ class AIManager:
         try:
             # Add user message to history
             user_message = AIMessage(role="user", content=message)
-            self.conversation_history.append(user_message)
+            if (
+                not self.conversation_history or
+                self.conversation_history[-1].role != "user" or
+                self.conversation_history[-1].content != message
+            ):
+                self.conversation_history.append(user_message)
 
             # Prepare messages for the provider
             messages = self._prepare_messages(context)
@@ -145,7 +150,13 @@ class AIManager:
             # Add assistant response to history
             if response.success:
                 assistant_message = AIMessage(role="assistant", content=response.content)
-                self.conversation_history.append(assistant_message)
+                # Avoid duplicate assistant entries if already appended elsewhere
+                if (
+                    not self.conversation_history or
+                    self.conversation_history[-1].role != "assistant" or
+                    self.conversation_history[-1].content != response.content
+                ):
+                    self.conversation_history.append(assistant_message)
 
             return response
 
@@ -174,7 +185,12 @@ class AIManager:
         try:
             # Add user message to history
             user_message = AIMessage(role="user", content=message)
-            self.conversation_history.append(user_message)
+            if (
+                not self.conversation_history or
+                self.conversation_history[-1].role != "user" or
+                self.conversation_history[-1].content != message
+            ):
+                self.conversation_history.append(user_message)
 
             # Prepare messages for the provider
             messages = self._prepare_messages(context)
@@ -187,7 +203,12 @@ class AIManager:
 
             # Add complete response to history
             assistant_message = AIMessage(role="assistant", content=full_response)
-            self.conversation_history.append(assistant_message)
+            if (
+                not self.conversation_history or
+                self.conversation_history[-1].role != "assistant" or
+                self.conversation_history[-1].content != full_response
+            ):
+                self.conversation_history.append(assistant_message)
 
         except Exception as e:
             self.logger.error(f"Error streaming AI response: {e}")

@@ -4,8 +4,10 @@
 import sys
 import os
 
-# Add the src directory to the Python path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
+# Ensure the src directory is on sys.path
+src_dir = os.path.dirname(__file__)
+if src_dir not in sys.path:
+    sys.path.insert(0, src_dir)
 
 from magic_tools.core import create_app
 

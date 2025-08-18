@@ -8,7 +8,7 @@ from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtCore import Qt, pyqtSignal, QThread, QTimer
 
 from ..ai import AIManager
-from ..ai.ai_manager import AIMessage, AIResponse
+from ..ai.models import AIMessage, AIResponse
 from ..config.settings import UISettings
 from .style import StyleManager
 from ..core.chat_storage import ChatStorageManager, Chat

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Build MyToolkit AppImage
+# Build MagicTools AppImage
 set -e
 
-APP=MyToolkit
+APP=MagicTools
 VERSION=0.1.0
 ARCH=x86_64
 APPDIR="${APP}.AppDir"
@@ -34,8 +34,12 @@ Icon=${APP}
 Categories=Utility;
 EOF
 
-# Icon (placeholder)
-cp assets/${APP}.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/${APP}.png"
+# Icon (optional placeholder)
+if [ -f "assets/${APP}.png" ]; then
+  cp assets/${APP}.png "$APPDIR/usr/share/icons/hicolor/256x256/apps/${APP}.png"
+else
+  echo "[warn] Icon assets/${APP}.png not found; proceeding without custom icon"
+fi
 
 # Download linuxdeploy & plugin
 wget -q "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-$ARCH.AppImage" -O linuxdeploy

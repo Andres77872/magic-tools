@@ -47,6 +47,19 @@ class AIResponse:
     error: Optional[str] = None
     raw_response: Optional[object] = None
 
+# Public API of this module
+__all__ = [
+    "AIMessage",
+    "AIResponse",
+    "OpenAIUsage",
+    "OpenAIMessage",
+    "OpenAIChoice",
+    "OpenAIChatCompletion",
+    "OpenAIStreamDelta",
+    "OpenAIStreamChoice",
+    "OpenAIStreamChunk",
+]
+
 
 # ---------------------------------------------------------------------------
 # OpenAI specific response models

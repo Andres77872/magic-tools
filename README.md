@@ -1,27 +1,14 @@
-# MyToolkit
+# Magic Tools
 
-A minimal desktop utility packaged as an AppImage. Press your chosen shortcut key to launch it and access handy tools.
+AI-integrated desktop launcher with extensible tools and a modern PyQt5 UI.
 
-## Features (template)
-* Opens quickly from a global shortcut.
-* PyQt5 GUI (placeholder).
-* Stand-alone AppImage – runs on most modern Linux distributions without installation.
+## Features
+- Global launcher with searchable tools grid
+- AI chat with streaming responses and slash commands
+- Configurable themes, hotkeys, and AI provider (OpenAI/local)
+- Persisted settings and chat histories under XDG config
 
-## Building the AppImage
-
-Requirements:
-* bash
-* wget
-* python3 (>=3.8)
-* The build script downloads `linuxdeploy` and `appimagetool` automatically.
-
-```bash
-./build-appimage.sh
-```
-
-The resulting file `MyToolkit-0.1.0-x86_64.AppImage` will appear in the project root.
-
-## Running from source (for development)
+## Run from source
 
 ```bash
 python3 -m venv .venv
@@ -29,3 +16,15 @@ source .venv/bin/activate
 pip install -r requirements.txt
 python src/main.py
 ```
+
+## Build AppImage (Linux)
+
+Requirements:
+- bash, wget, python3 (>=3.8)
+
+```bash
+cd appimage
+./build-appimage.sh
+```
+
+The resulting file `MagicTools-0.1.0-x86_64.AppImage` will be placed in the project root.

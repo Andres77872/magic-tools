@@ -10,6 +10,7 @@ from ..ui import MainWindow
 from ..ai import AIManager
 from ..tools import ToolManager
 from .hotkeys import GlobalHotkeyManager
+from .. import __version__
 
 
 class MagicToolsApp(QtWidgets.QApplication):
@@ -68,7 +69,7 @@ class MagicToolsApp(QtWidgets.QApplication):
     def setup_application(self):
         """Set up application-wide properties."""
         self.setApplicationName("Magic Tools")
-        self.setApplicationVersion("0.1.0")
+        self.setApplicationVersion(__version__)
         self.setOrganizationName("Magic Tools")
         self.setQuitOnLastWindowClosed(False)  # Keep running in background
         
@@ -124,6 +125,7 @@ class MagicToolsApp(QtWidgets.QApplication):
         self.hotkey_manager.toggle_requested.connect(self.main_window.toggle_visibility)
         self.hotkey_manager.ai_chat_requested.connect(self.main_window.show_ai_chat)
         self.hotkey_manager.quick_search_requested.connect(self.main_window.show_quick_search)
+        self.hotkey_manager.focus_selected_requested.connect(self.on_focus_selected)
         self.hotkey_manager.hide_requested.connect(self.main_window.hide)
         
         # Connect application quit signal
@@ -172,6 +174,15 @@ class MagicToolsApp(QtWidgets.QApplication):
         """Save current settings to configuration."""
         self.logger.info("Saving application settings")
         return self.config_manager.save_settings()
+
+    def on_focus_selected(self):
+        """Hotkey handler: focus window matching selected text via tool."""
+        try:
+            result = self.tool_manager.execute_tool('focus_window')
+            if not result.success:
+                self.logger.warning(f"Focus selected failed: {result.error}")
+        except Exception as e:
+            self.logger.error(f"Error focusing selected window: {e}")
     
     def get_main_window(self) -> MainWindow:
         """Get the main window instance."""

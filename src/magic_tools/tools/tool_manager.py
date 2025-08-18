@@ -42,9 +42,11 @@ class ToolManager:
 
             # Register all tool classes so they are discoverable even if disabled
             for tool_name, tool_class in tool_classes.items():
-                self.register_tool_class(tool_name, tool_class)
-                if tool_name in self.settings.enabled_tools:
-                    self.logger.info(f"Loaded built-in tool: {tool_name}")
+                # Normalize registry key to lowercase for consistency
+                safe_name = tool_name.lower()
+                self.register_tool_class(safe_name, tool_class)
+                if safe_name in [t.lower() for t in self.settings.enabled_tools]:
+                    self.logger.info(f"Loaded built-in tool: {safe_name}")
 
             self.logger.info(f"Discovered {len(tool_classes)} built-in tools")
             
@@ -116,12 +118,13 @@ class ToolManager:
         Returns:
             Tool instance or None if failed
         """
-        if name not in self.tool_classes:
+        key = name.lower()
+        if key not in self.tool_classes:
             self.logger.error(f"Tool class not found: {name}")
             return None
         
         try:
-            tool_class = self.tool_classes[name]
+            tool_class = self.tool_classes[key]
             tool_instance = tool_class()
             # If this is the prompt commands tool, ensure it reflects current settings.
             if name == "prompt_commands":
@@ -130,8 +133,8 @@ class ToolManager:
                     pass
                 except Exception as e:
                     self.logger.warning(f"Could not apply settings to prompt_commands: {e}")
-            self.tools[name] = tool_instance
-            self.logger.info(f"Instantiated tool: {name}")
+            self.tools[key] = tool_instance
+            self.logger.info(f"Instantiated tool: {key}")
             return tool_instance
             
         except Exception as e:
@@ -147,13 +150,14 @@ class ToolManager:
         Returns:
             Tool instance or None if not found
         """
-        if name not in self.tools:
+        key = name.lower()
+        if key not in self.tools:
             # Try to instantiate the tool if class is available
-            if name in self.tool_classes:
-                return self.instantiate_tool(name)
+            if key in self.tool_classes:
+                return self.instantiate_tool(key)
             return None
         
-        return self.tools[name]
+        return self.tools[key]
     
     def get_all_tools(self) -> Dict[str, BaseTool]:
         """Get all instantiated tools.
@@ -361,8 +365,9 @@ class ToolManager:
         self.settings = settings
         
         # Update enabled/disabled status for existing tools
+        enabled_set = {t.lower() for t in settings.enabled_tools}
         for name, tool in self.tools.items():
-            enabled = name in settings.enabled_tools
+            enabled = name in enabled_set
             tool.set_enabled(enabled)
         
         # Reload tools if auto-loading is enabled

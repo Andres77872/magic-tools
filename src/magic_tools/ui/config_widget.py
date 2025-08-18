@@ -188,6 +188,22 @@ class HotkeyConfigSection(QtWidgets.QGroupBox):
         # Quick search shortcut
         self.quick_search_edit = self.create_shortcut_edit(self.hotkey_settings.quick_search_shortcut)
         layout.addRow("Quick Search:", self.quick_search_edit)
+
+        # Focus selected shortcut
+        try:
+            current_focus = getattr(self.hotkey_settings, 'focus_selected_shortcut', 'Ctrl+Alt+F')
+        except Exception:
+            current_focus = 'Ctrl+Alt+F'
+        self.focus_selected_edit = self.create_shortcut_edit(current_focus)
+        layout.addRow("Focus Selected:", self.focus_selected_edit)
+
+        # Hide shortcut
+        try:
+            current_hide = getattr(self.hotkey_settings, 'hide_shortcut', 'Escape')
+        except Exception:
+            current_hide = 'Escape'
+        self.hide_edit = self.create_shortcut_edit(current_hide)
+        layout.addRow("Hide:", self.hide_edit)
         
         # Help text
         help_label = QtWidgets.QLabel(
@@ -269,7 +285,9 @@ class HotkeyConfigSection(QtWidgets.QGroupBox):
         return HotkeySettings(
             toggle_shortcut=self.toggle_edit.text(),
             ai_chat_shortcut=self.ai_chat_edit.text(),
-            quick_search_shortcut=self.quick_search_edit.text()
+            quick_search_shortcut=self.quick_search_edit.text(),
+            focus_selected_shortcut=getattr(self, 'focus_selected_edit', None).text() if hasattr(self, 'focus_selected_edit') else self.hotkey_settings.focus_selected_shortcut,
+            hide_shortcut=getattr(self, 'hide_edit', None).text() if hasattr(self, 'hide_edit') else getattr(self.hotkey_settings, 'hide_shortcut', 'Escape')
         )
 
 

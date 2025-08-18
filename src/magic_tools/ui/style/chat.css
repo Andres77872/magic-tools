@@ -543,3 +543,561 @@
     background-color: rgba(240, 40, 80, 180);
     border-color: rgba(220, 40, 80, 150);
 }
+
+/* ===================== */
+/* Prompt Commands Manager */
+/* ===================== */
+
+
+
+/* Main Title */
+.dark-theme QLabel[class="prompt-commands-title"] {
+    color: #ffffff;
+    background: transparent;
+}
+
+.light-theme QLabel[class="prompt-commands-title"] {
+    color: #333333;
+    background: transparent;
+}
+
+/* Description Text */
+.dark-theme QLabel[class="prompt-commands-description"] {
+    color: #e8e8e8;
+    background: transparent;
+}
+
+.light-theme QLabel[class="prompt-commands-description"] {
+    color: #4a4a4a;
+    background: transparent;
+}
+
+/* Panel Titles */
+.dark-theme QLabel[class="prompt-commands-panel-title"] {
+    color: #ffffff;
+    background: transparent;
+    padding: 4px 0px;
+}
+
+.light-theme QLabel[class="prompt-commands-panel-title"] {
+    color: #333333;
+    background: transparent;
+    padding: 4px 0px;
+}
+
+/* Search Box */
+.dark-theme QLineEdit[class="prompt-commands-search"] {
+    background: #3c3c3c;
+    border: 1px solid #666666;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #ffffff;
+    font-size: 13px;
+}
+
+.dark-theme QLineEdit[class="prompt-commands-search"]:focus {
+    border-color: #007acc;
+    background: #404040;
+}
+
+.light-theme QLineEdit[class="prompt-commands-search"] {
+    background: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #333333;
+    font-size: 13px;
+}
+
+.light-theme QLineEdit[class="prompt-commands-search"]:focus {
+    border-color: #007acc;
+    background: #ffffff;
+}
+
+/* Command List */
+.dark-theme QListWidget[class="prompt-commands-list"] {
+    background: #2d2d2d;
+    border: 1px solid #555555;
+    border-radius: 8px;
+    padding: 4px;
+    color: #ffffff;
+    outline: none;
+}
+
+.light-theme QListWidget[class="prompt-commands-list"] {
+    background: #fafafa;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    padding: 4px;
+    color: #333333;
+    outline: none;
+}
+
+.dark-theme QListWidget[class="prompt-commands-list"]::item {
+    padding: 2px;
+    margin: 2px;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid transparent;
+}
+
+.light-theme QListWidget[class="prompt-commands-list"]::item {
+    padding: 2px;
+    margin: 2px;
+    border-radius: 6px;
+    background: transparent;
+    border: 1px solid transparent;
+}
+
+.dark-theme QListWidget[class="prompt-commands-list"]::item:hover {
+    background: rgba(70, 70, 70, 120);
+    border-color: rgba(100, 100, 100, 80);
+}
+
+.light-theme QListWidget[class="prompt-commands-list"]::item:hover {
+    background: rgba(220, 220, 220, 120);
+    border-color: rgba(180, 180, 180, 80);
+}
+
+.dark-theme QListWidget[class="prompt-commands-list"]::item:selected {
+    background: rgba(0, 122, 204, 120);
+    border-color: rgba(0, 122, 204, 200);
+}
+
+.light-theme QListWidget[class="prompt-commands-list"]::item:selected {
+    background: rgba(0, 122, 204, 120);
+    border-color: rgba(0, 122, 204, 200);
+}
+
+/* Command List Item Labels */
+.dark-theme QLabel[class="prompt-commands-item-name"] {
+    color: #ffffff;
+    background: transparent;
+}
+
+.light-theme QLabel[class="prompt-commands-item-name"] {
+    color: #2c2c2c;
+    background: transparent;
+}
+
+.dark-theme QLabel[class="prompt-commands-item-description"] {
+    color: #c8c8c8;
+    background: transparent;
+}
+
+.light-theme QLabel[class="prompt-commands-item-description"] {
+    color: #666666;
+    background: transparent;
+}
+
+/* List Control Buttons */
+.dark-theme QPushButton[class="prompt-commands-add-button"] {
+    background: rgba(46, 204, 113, 180);
+    border: 1px solid rgba(46, 204, 113, 200);
+    border-radius: 4px;
+    padding: 6px 12px;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.dark-theme QPushButton[class="prompt-commands-add-button"]:hover {
+    background: rgba(46, 204, 113, 220);
+}
+
+.light-theme QPushButton[class="prompt-commands-add-button"] {
+    background: rgba(46, 204, 113, 160);
+    border: 1px solid rgba(46, 204, 113, 180);
+    border-radius: 4px;
+    padding: 6px 12px;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.light-theme QPushButton[class="prompt-commands-add-button"]:hover {
+    background: rgba(46, 204, 113, 200);
+}
+
+.dark-theme QPushButton[class="prompt-commands-duplicate-button"],
+.dark-theme QPushButton[class="prompt-commands-remove-button"] {
+    background: rgba(100, 100, 100, 150);
+    border: 1px solid rgba(150, 150, 150, 100);
+    border-radius: 4px;
+    padding: 6px 12px;
+    color: #ffffff;
+    font-size: 12px;
+}
+
+.dark-theme QPushButton[class="prompt-commands-duplicate-button"]:hover,
+.dark-theme QPushButton[class="prompt-commands-remove-button"]:hover {
+    background: rgba(120, 120, 120, 180);
+}
+
+.dark-theme QPushButton[class="prompt-commands-remove-button"]:hover {
+    background: rgba(220, 20, 60, 150);
+    border-color: rgba(255, 20, 60, 100);
+}
+
+.light-theme QPushButton[class="prompt-commands-duplicate-button"],
+.light-theme QPushButton[class="prompt-commands-remove-button"] {
+    background: rgba(200, 200, 200, 150);
+    border: 1px solid rgba(150, 150, 150, 150);
+    border-radius: 4px;
+    padding: 6px 12px;
+    color: #333333;
+    font-size: 12px;
+}
+
+.light-theme QPushButton[class="prompt-commands-duplicate-button"]:hover,
+.light-theme QPushButton[class="prompt-commands-remove-button"]:hover {
+    background: rgba(180, 180, 180, 180);
+}
+
+.light-theme QPushButton[class="prompt-commands-remove-button"]:hover {
+    background: rgba(220, 20, 60, 150);
+    border-color: rgba(200, 20, 60, 100);
+    color: #ffffff;
+}
+
+/* Form Input Fields */
+.dark-theme QLineEdit[class="prompt-commands-name-input"],
+.dark-theme QLineEdit[class="prompt-commands-description-input"] {
+    background: #3c3c3c;
+    border: 1px solid #666666;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #ffffff;
+    font-size: 13px;
+}
+
+.dark-theme QLineEdit[class="prompt-commands-name-input"]:focus,
+.dark-theme QLineEdit[class="prompt-commands-description-input"]:focus {
+    border-color: #007acc;
+    background: #404040;
+}
+
+.light-theme QLineEdit[class="prompt-commands-name-input"],
+.light-theme QLineEdit[class="prompt-commands-description-input"] {
+    background: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: #333333;
+    font-size: 13px;
+}
+
+.light-theme QLineEdit[class="prompt-commands-name-input"]:focus,
+.light-theme QLineEdit[class="prompt-commands-description-input"]:focus {
+    border-color: #007acc;
+    background: #ffffff;
+}
+
+/* Validation Labels */
+.dark-theme QLabel[class="prompt-commands-validation-error"] {
+    color: #ff4757;
+    background: transparent;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.dark-theme QLabel[class="prompt-commands-validation-success"] {
+    color: #2ed573;
+    background: transparent;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.light-theme QLabel[class="prompt-commands-validation-error"] {
+    color: #d63031;
+    background: transparent;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.light-theme QLabel[class="prompt-commands-validation-success"] {
+    color: #00b894;
+    background: transparent;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+/* System Prompt Label */
+.dark-theme QLabel[class="prompt-commands-prompt-label"] {
+    color: #ffffff;
+    background: transparent;
+}
+
+.light-theme QLabel[class="prompt-commands-prompt-label"] {
+    color: #333333;
+    background: transparent;
+}
+
+/* Help Button */
+.dark-theme QToolButton[class="prompt-commands-help-button"] {
+    background: rgba(0, 122, 204, 150);
+    border: 1px solid rgba(0, 122, 204, 200);
+    border-radius: 12px;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 12px;
+    width: 24px;
+    height: 24px;
+}
+
+.dark-theme QToolButton[class="prompt-commands-help-button"]:hover {
+    background: rgba(0, 122, 204, 200);
+}
+
+.light-theme QToolButton[class="prompt-commands-help-button"] {
+    background: rgba(0, 122, 204, 140);
+    border: 1px solid rgba(0, 122, 204, 180);
+    border-radius: 12px;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 12px;
+    width: 24px;
+    height: 24px;
+}
+
+.light-theme QToolButton[class="prompt-commands-help-button"]:hover {
+    background: rgba(0, 122, 204, 180);
+}
+
+/* Templates Combo Box */
+.dark-theme QComboBox[class="prompt-commands-examples"] {
+    background: #3c3c3c;
+    border: 1px solid #666666;
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: #ffffff;
+    font-size: 12px;
+    min-width: 200px;
+}
+
+.dark-theme QComboBox[class="prompt-commands-examples"]:focus {
+    border-color: #007acc;
+}
+
+.light-theme QComboBox[class="prompt-commands-examples"] {
+    background: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: #333333;
+    font-size: 12px;
+    min-width: 200px;
+}
+
+.light-theme QComboBox[class="prompt-commands-examples"]:focus {
+    border-color: #007acc;
+}
+
+/* System Prompt Text Editor */
+.dark-theme QTextEdit[class="prompt-commands-prompt-input"] {
+    background: #2d2d2d;
+    border: 1px solid #555555;
+    border-radius: 8px;
+    padding: 12px;
+    color: #f0f0f0;
+    font-size: 13px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    line-height: 1.5;
+}
+
+.dark-theme QTextEdit[class="prompt-commands-prompt-input"]:focus {
+    border-color: #007acc;
+    background: #323232;
+}
+
+.light-theme QTextEdit[class="prompt-commands-prompt-input"] {
+    background: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 8px;
+    padding: 12px;
+    color: #2c2c2c;
+    font-size: 13px;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    line-height: 1.5;
+}
+
+.light-theme QTextEdit[class="prompt-commands-prompt-input"]:focus {
+    border-color: #007acc;
+    background: #ffffff;
+}
+
+/* Test Button */
+.dark-theme QPushButton[class="prompt-commands-test-button"] {
+    background: rgba(155, 89, 182, 150);
+    border: 1px solid rgba(155, 89, 182, 200);
+    border-radius: 6px;
+    padding: 8px 16px;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.dark-theme QPushButton[class="prompt-commands-test-button"]:hover {
+    background: rgba(155, 89, 182, 200);
+}
+
+.dark-theme QPushButton[class="prompt-commands-test-button"]:disabled {
+    background: rgba(100, 100, 100, 100);
+    border-color: rgba(120, 120, 120, 80);
+    color: rgba(255, 255, 255, 100);
+}
+
+.light-theme QPushButton[class="prompt-commands-test-button"] {
+    background: rgba(155, 89, 182, 140);
+    border: 1px solid rgba(155, 89, 182, 180);
+    border-radius: 6px;
+    padding: 8px 16px;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.light-theme QPushButton[class="prompt-commands-test-button"]:hover {
+    background: rgba(155, 89, 182, 180);
+}
+
+.light-theme QPushButton[class="prompt-commands-test-button"]:disabled {
+    background: rgba(200, 200, 200, 120);
+    border-color: rgba(180, 180, 180, 100);
+    color: rgba(100, 100, 100, 120);
+}
+
+/* Bottom Action Buttons */
+.dark-theme QPushButton[class="prompt-commands-import-button"],
+.dark-theme QPushButton[class="prompt-commands-export-button"] {
+    background: rgba(52, 152, 219, 150);
+    border: 1px solid rgba(52, 152, 219, 200);
+    border-radius: 6px;
+    padding: 8px 16px;
+    color: #ffffff;
+    font-size: 12px;
+}
+
+.dark-theme QPushButton[class="prompt-commands-import-button"]:hover,
+.dark-theme QPushButton[class="prompt-commands-export-button"]:hover {
+    background: rgba(52, 152, 219, 200);
+}
+
+.light-theme QPushButton[class="prompt-commands-import-button"],
+.light-theme QPushButton[class="prompt-commands-export-button"] {
+    background: rgba(52, 152, 219, 140);
+    border: 1px solid rgba(52, 152, 219, 180);
+    border-radius: 6px;
+    padding: 8px 16px;
+    color: #ffffff;
+    font-size: 12px;
+}
+
+.light-theme QPushButton[class="prompt-commands-import-button"]:hover,
+.light-theme QPushButton[class="prompt-commands-export-button"]:hover {
+    background: rgba(52, 152, 219, 180);
+}
+
+.dark-theme QPushButton[class="prompt-commands-cancel-button"] {
+    background: rgba(149, 165, 166, 150);
+    border: 1px solid rgba(149, 165, 166, 200);
+    border-radius: 6px;
+    padding: 10px 20px;
+    color: #ffffff;
+    font-size: 13px;
+}
+
+.dark-theme QPushButton[class="prompt-commands-cancel-button"]:hover {
+    background: rgba(149, 165, 166, 200);
+}
+
+.light-theme QPushButton[class="prompt-commands-cancel-button"] {
+    background: rgba(149, 165, 166, 140);
+    border: 1px solid rgba(149, 165, 166, 180);
+    border-radius: 6px;
+    padding: 10px 20px;
+    color: #ffffff;
+    font-size: 13px;
+}
+
+.light-theme QPushButton[class="prompt-commands-cancel-button"]:hover {
+    background: rgba(149, 165, 166, 180);
+}
+
+.dark-theme QPushButton[class="prompt-commands-save-button"] {
+    background: rgba(46, 204, 113, 150);
+    border: 1px solid rgba(46, 204, 113, 200);
+    border-radius: 6px;
+    padding: 10px 20px;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.dark-theme QPushButton[class="prompt-commands-save-button"]:hover {
+    background: rgba(46, 204, 113, 200);
+}
+
+.light-theme QPushButton[class="prompt-commands-save-button"] {
+    background: rgba(46, 204, 113, 140);
+    border: 1px solid rgba(46, 204, 113, 180);
+    border-radius: 6px;
+    padding: 10px 20px;
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.light-theme QPushButton[class="prompt-commands-save-button"]:hover {
+    background: rgba(46, 204, 113, 180);
+}
+
+/* Test Dialog Labels */
+.dark-theme QLabel[class="prompt-commands-test-label"] {
+    color: #ffffff;
+    background: transparent;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.light-theme QLabel[class="prompt-commands-test-label"] {
+    color: #2c2c2c;
+    background: transparent;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.dark-theme QLabel[class="prompt-commands-test-note"] {
+    color: #b8b8b8;
+    background: transparent;
+    font-style: italic;
+    font-size: 11px;
+}
+
+.light-theme QLabel[class="prompt-commands-test-note"] {
+    color: #666666;
+    background: transparent;
+    font-style: italic;
+    font-size: 11px;
+}
+
+/* Help Dialog Content */
+.dark-theme QTextEdit[class="prompt-commands-help-content"] {
+    background: #2d2d2d;
+    border: 1px solid #555555;
+    border-radius: 8px;
+    padding: 15px;
+    color: #f0f0f0;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.light-theme QTextEdit[class="prompt-commands-help-content"] {
+    background: #ffffff;
+    border: 1px solid #cccccc;
+    border-radius: 8px;
+    padding: 15px;
+    color: #2c2c2c;
+    font-size: 13px;
+    line-height: 1.6;
+}

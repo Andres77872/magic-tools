@@ -10,6 +10,18 @@
     border-radius: 12px;
 }
 
+.dark-theme QWidget {
+    background-color: #1e1e1e;
+    color: #ffffff;
+}
+
+.dark-theme QDialog {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    border: 1px solid #555555;
+    border-radius: 8px;
+}
+
 .dark-theme QLineEdit {
     background-color: rgba(50, 50, 50, 200);
     border: 2px solid #555555;
@@ -85,6 +97,18 @@
 .light-theme #mainWidget {
     background-color: rgba(255, 255, 255, 240);
     border-radius: 12px;
+}
+
+.light-theme QWidget {
+    background-color: #ffffff;
+    color: #333333;
+}
+
+.light-theme QDialog {
+    background-color: #ffffff;
+    color: #333333;
+    border: 1px solid #cccccc;
+    border-radius: 8px;
 }
 
 .light-theme QLineEdit {

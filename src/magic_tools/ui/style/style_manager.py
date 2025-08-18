@@ -25,7 +25,8 @@ class StyleManager:
             'themes': 'themes.css',
             'chat': 'chat.css',
             'launcher': 'launcher.css',
-            'config': 'config.css'
+            'config': 'config.css',
+            'prompt_commands': 'chat.css'  # Prompt commands styles are in chat.css
         }
         
         for name, filename in css_files.items():

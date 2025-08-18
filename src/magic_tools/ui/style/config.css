@@ -185,7 +185,8 @@
 .dark-theme QPushButton[class="config-save-button"]:hover {
     background-color: #218838;
     border-color: #1c7430;
-    transform: translateY(-1px);
+    padding-top: 9px;
+    padding-bottom: 11px;
 }
 
 .dark-theme QPushButton[class="config-cancel-button"] {
@@ -202,7 +203,8 @@
 .dark-theme QPushButton[class="config-cancel-button"]:hover {
     background-color: #5a6268;
     border-color: #464a4e;
-    transform: translateY(-1px);
+    padding-top: 9px;
+    padding-bottom: 11px;
 }
 
 .dark-theme QPushButton[class="config-reset-button"] {
@@ -219,7 +221,8 @@
 .dark-theme QPushButton[class="config-reset-button"]:hover {
     background-color: #c82333;
     border-color: #a71e2a;
-    transform: translateY(-1px);
+    padding-top: 9px;
+    padding-bottom: 11px;
 }
 
 /* While Qt doesn't support styling layouts, keep this for potential future property usage */

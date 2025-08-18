@@ -275,9 +275,7 @@ class MainWindow(QtWidgets.QMainWindow):
     
     def keyPressEvent(self, event):
         """Handle key press events."""
-        if event.key() == Qt.Key_Escape:
-            self.hide()
-        elif event.key() == Qt.Key_Tab and event.modifiers() == Qt.ControlModifier:
+        if event.key() == Qt.Key_Tab and event.modifiers() == Qt.ControlModifier:
             # Switch between launcher and AI chat
             if self.current_mode == "launcher":
                 self.show_ai_chat()

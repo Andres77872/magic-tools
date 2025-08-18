@@ -124,6 +124,7 @@ class MagicToolsApp(QtWidgets.QApplication):
         self.hotkey_manager.toggle_requested.connect(self.main_window.toggle_visibility)
         self.hotkey_manager.ai_chat_requested.connect(self.main_window.show_ai_chat)
         self.hotkey_manager.quick_search_requested.connect(self.main_window.show_quick_search)
+        self.hotkey_manager.hide_requested.connect(self.main_window.hide)
         
         # Connect application quit signal
         self.aboutToQuit.connect(self.cleanup)
@@ -137,7 +138,8 @@ class MagicToolsApp(QtWidgets.QApplication):
         self.hotkey_manager.register_default_hotkeys(
             toggle_shortcut=hotkey_settings.toggle_shortcut,
             ai_chat_shortcut=hotkey_settings.ai_chat_shortcut,
-            quick_search_shortcut=hotkey_settings.quick_search_shortcut
+            quick_search_shortcut=hotkey_settings.quick_search_shortcut,
+            hide_shortcut=hotkey_settings.hide_shortcut
         )
     
     def update_hotkeys(self):
@@ -146,6 +148,7 @@ class MagicToolsApp(QtWidgets.QApplication):
         self.hotkey_manager.update_hotkey('toggle', hotkey_settings.toggle_shortcut)
         self.hotkey_manager.update_hotkey('ai_chat', hotkey_settings.ai_chat_shortcut)
         self.hotkey_manager.update_hotkey('quick_search', hotkey_settings.quick_search_shortcut)
+        self.hotkey_manager.update_hotkey('hide', hotkey_settings.hide_shortcut)
     
     def on_settings_changed(self, new_settings):
         """Handle settings changes from the config widget."""

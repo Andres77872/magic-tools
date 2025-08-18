@@ -25,6 +25,7 @@ class HotkeySettings:
     ai_chat_shortcut: str = "Ctrl+Alt+A"
     quick_search_shortcut: str = "Ctrl+Alt+S"
     focus_selected_shortcut: str = "Ctrl+Alt+F"
+    hide_shortcut: str = "Escape"
 
 
 @dataclass

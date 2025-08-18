@@ -14,6 +14,7 @@ class GlobalHotkeyManager(QtCore.QObject):
     ai_chat_requested = QtCore.pyqtSignal()
     quick_search_requested = QtCore.pyqtSignal()
     focus_selected_requested = QtCore.pyqtSignal()
+    hide_requested = QtCore.pyqtSignal()
     
     def __init__(self):
         super().__init__()
@@ -157,6 +158,7 @@ class GlobalHotkeyManager(QtCore.QObject):
             'ai_chat': lambda: self.ai_chat_requested.emit(),
             'quick_search': lambda: self.quick_search_requested.emit(),
             'focus_selected': lambda: self.focus_selected_requested.emit(),
+            'hide': lambda: self.hide_requested.emit(),
         }
         
         if name in callback_map:
@@ -168,7 +170,8 @@ class GlobalHotkeyManager(QtCore.QObject):
     def register_default_hotkeys(self, toggle_shortcut: str = "Ctrl+Space", 
                                 ai_chat_shortcut: str = "Ctrl+Alt+A",
                                 quick_search_shortcut: str = "Ctrl+Alt+S",
-                                focus_selected_shortcut: str = "Ctrl+Alt+F"):
+                                focus_selected_shortcut: str = "Ctrl+Alt+F",
+                                hide_shortcut: str = "Escape"):
         """Register default application hotkeys.
         
         Args:
@@ -176,11 +179,13 @@ class GlobalHotkeyManager(QtCore.QObject):
             ai_chat_shortcut: AI chat shortcut
             quick_search_shortcut: Quick search shortcut
             focus_selected_shortcut: Focus window matching selected text
+            hide_shortcut: Hide/close shortcut
         """
         self.register_hotkey('toggle', toggle_shortcut, lambda: self.toggle_requested.emit())
         self.register_hotkey('ai_chat', ai_chat_shortcut, lambda: self.ai_chat_requested.emit())
         self.register_hotkey('quick_search', quick_search_shortcut, lambda: self.quick_search_requested.emit())
         self.register_hotkey('focus_selected', focus_selected_shortcut, lambda: self.focus_selected_requested.emit())
+        self.register_hotkey('hide', hide_shortcut, lambda: self.hide_requested.emit())
     
     def get_active_hotkeys(self) -> Dict[str, str]:
         """Get currently active hotkeys.

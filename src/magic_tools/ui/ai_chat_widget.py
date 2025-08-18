@@ -1178,10 +1178,7 @@ How can I help you today?""":
     
     def keyPressEvent(self, event):
         """Handle key press events."""
-        if event.key() == Qt.Key_Escape:
-            self.close_requested.emit()
-        else:
-            super().keyPressEvent(event)
+        super().keyPressEvent(event)
 
     def closeEvent(self, event):
         """Handle close event."""

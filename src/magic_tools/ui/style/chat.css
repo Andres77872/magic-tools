@@ -5,7 +5,7 @@
 /* ===================== */
 /* Message Bubble Styles */
 .dark-theme QLabel[class="message-bubble-user"] {
-    background-color: rgba(0, 122, 204, 150);
+    background-color: rgba(10, 132, 255, 0.55);
     border-radius: 12px;
     padding: 8px 12px;
     margin-left: 50px;
@@ -13,17 +13,17 @@
 }
 
 .dark-theme QLabel[class="message-bubble-assistant"] {
-    background-color: rgba(100, 100, 100, 150);
+    background-color: #1a1f27;
     border-radius: 12px;
     padding: 8px 12px;
     margin-right: 50px;
-    color: #ffffff;
+    color: #e6e6e6;
 }
 
 /* Support QTextBrowser bubbles */
 .dark-theme QLabel[class="message-bubble-user"],
 .dark-theme QTextBrowser[class="message-bubble-user"] {
-    background-color: rgba(0, 122, 204, 150);
+    background-color: rgba(10, 132, 255, 0.60);
     border-radius: 12px;
     padding: 10px 14px;
     margin-left: 50px;
@@ -32,11 +32,11 @@
 
 .dark-theme QLabel[class="message-bubble-assistant"],
 .dark-theme QTextBrowser[class="message-bubble-assistant"] {
-    background-color: rgba(100, 100, 100, 150);
+    background-color: #1a1f27;
     border-radius: 12px;
     padding: 10px 14px;
     margin-right: 50px;
-    color: #ffffff;
+    color: #e6e6e6;
 }
 
 /* Ensure bubbles don't show their own scrollbars */
@@ -47,63 +47,63 @@
 
 /* Chat Header Styles */
 .dark-theme QPushButton[class="chat-back-button"] {
-    background-color: rgba(100, 100, 100, 150);
-    border: 1px solid #666666;
+    background-color: #1a1f27;
+    border: 1px solid #323a46;
     border-radius: 4px;
-    color: #ffffff;
+    color: #e6e6e6;
     font-size: 11px;
 }
 
 .dark-theme QPushButton[class="chat-back-button"]:hover {
-    background-color: rgba(120, 120, 120, 150);
+    background-color: #202634;
 }
 
 .dark-theme QLabel[class="chat-title"] {
     font-size: 16px;
     font-weight: bold;
-    color: #ffffff;
+    color: #e6e6e6;
 }
 
 .dark-theme QLabel[class="chat-ai-status"] {
     font-size: 11px;
-    color: #cccccc;
+    color: #b5bdc9;
 }
 
 /* Chat Input Styles */
 .dark-theme QPushButton[class="chat-send-button"] {
-    background-color: rgba(0, 122, 204, 150);
-    border: 1px solid #007acc;
+    background-color: #0a84ff;
+    border: 1px solid #0a84ff;
     border-radius: 4px;
     color: #ffffff;
     font-weight: bold;
 }
 
 .dark-theme QPushButton[class="chat-send-button"]:hover {
-    background-color: rgba(0, 122, 204, 200);
+    background-color: #2994ff;
 }
 
 .dark-theme QPushButton[class="chat-send-button"]:disabled {
-    background-color: rgba(100, 100, 100, 100);
-    border-color: #666666;
-    color: #999999;
+    background-color: #1a1f27;
+    border-color: #2a2f3a;
+    color: #8a93a2;
 }
 
 /* Chat Status Styles */
 .dark-theme QLabel[class="chat-status-label"] {
     font-size: 10px;
-    color: #999999;
+    color: #8a93a2;
 }
 
 .dark-theme QPushButton[class="chat-clear-button"] {
-    background-color: rgba(150, 50, 50, 150);
-    border: 1px solid #cc4444;
+    background-color: #8a2b2b;
+    border: 1px solid #a33a3a;
     border-radius: 4px;
     color: #ffffff;
     font-size: 10px;
 }
 
 .dark-theme QPushButton[class="chat-clear-button"]:hover {
-    background-color: rgba(150, 50, 50, 200);
+    background-color: #a13939;
 }
 
 /* ===================== */
@@ -253,8 +253,8 @@
 /* ===================== */
 /* Popup container */
 .dark-theme QFrame[class="chat-command-popup"] {
-    background: rgba(40, 40, 40, 240);
-    border: 2px solid #555555;
+    background: #1a1f27;
+    border: 1px solid #2a2f3a;
     border-radius: 8px;
 }
 
@@ -269,7 +269,7 @@
     background: transparent;
     outline: none;
     border: none;
-    color: #ffffff;
+    color: #e6e6e6;
     font-size: 13px;
 }
 
@@ -283,18 +283,18 @@
 
 /* List items */
 .dark-theme QListWidget[class="chat-command-list"]::item {
-    color: #ffffff;
+    color: #e6e6e6;
     padding: 8px 12px;
-    border-bottom: 1px solid rgba(85, 85, 85, 0.3);
+    border-bottom: 1px solid rgba(42, 47, 58, 0.6);
 }
 
 .dark-theme QListWidget[class="chat-command-list"]::item:selected {
-    background: rgba(0, 122, 204, 0.4);
+    background: rgba(10, 132, 255, 0.35);
     border-radius: 4px;
 }
 
 .dark-theme QListWidget[class="chat-command-list"]::item:hover {
-    background: rgba(70, 70, 70, 0.6);
+    background: #202634;
     border-radius: 4px;
 }
 
@@ -316,7 +316,7 @@
 
 /* Command badge inside input */
 .dark-theme QFrame[class="chat-command-badge"] {
-    background: rgba(46, 204, 113, 0.8);
+    background: rgba(46, 204, 113, 0.18);
     border: 1px solid #2ecc71;
     border-radius: 14px;
     min-width: 50px;
@@ -332,7 +332,7 @@
 }
 
 .dark-theme QLabel[class="chat-command-badge-label"] {
-    color: #ffffff;
+    color: #e6e6e6;
     font-weight: bold;
     font-size: 11px;
     padding: 0px 2px;
@@ -350,14 +350,14 @@
     background: transparent;
     border: none;
     font-weight: bold;
-    color: rgba(255, 255, 255, 0.9);
+    color: rgba(230, 230, 230, 0.9);
     font-size: 12px;
     border-radius: 8px;
 }
 
 .dark-theme QToolButton[class="chat-command-badge-close"]:hover {
     color: #ffffff;
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .light-theme QToolButton[class="chat-command-badge-close"] {
@@ -378,22 +378,22 @@
 
 /* Chat Control Buttons */
 .dark-theme QPushButton[class="chat-control-button"] {
-    background-color: rgba(100, 100, 100, 150);
-    border: 1px solid rgba(150, 150, 150, 100);
+    background-color: #1a1f27;
+    border: 1px solid #323a46;
     border-radius: 4px;
     padding: 2px 6px;
-    color: #ffffff;
+    color: #e6e6e6;
     font-size: 10px;
     font-weight: bold;
 }
 
 .dark-theme QPushButton[class="chat-control-button"]:hover {
-    background-color: rgba(120, 120, 120, 180);
-    border-color: rgba(180, 180, 180, 150);
+    background-color: #202634;
+    border-color: #3a4352;
 }
 
 .dark-theme QPushButton[class="chat-control-button"]:pressed {
-    background-color: rgba(80, 80, 80, 200);
+    background-color: #161a20;
 }
 
 .light-theme QPushButton[class="chat-control-button"] {
@@ -417,7 +417,7 @@
 
 /* Chat Name Label */
 .dark-theme QLabel[class="chat-name-label"] {
-    color: rgba(255, 255, 255, 180);
+    color: rgba(230, 230, 230, 0.75);
     font-style: italic;
 }
 
@@ -441,8 +441,8 @@
 
 /* Chat Manager Dialog Styles */
 .dark-theme QDialog {
-    background-color: #2d2d2d;
-    border: 1px solid #555;
+    background-color: #14171f;
+    border: 1px solid #2a2f3a;
     border-radius: 8px;
 }
 
@@ -474,11 +474,11 @@
 
 /* Chat List Widget in Dialog */
 .dark-theme QListWidget {
-    background-color: rgba(40, 40, 40, 200);
-    border: 1px solid rgba(100, 100, 100, 100);
+    background-color: #1a1f27;
+    border: 1px solid #2a2f3a;
     border-radius: 6px;
     padding: 4px;
-    color: #ffffff;
+    color: #e6e6e6;
 }
 
 .light-theme QListWidget {
@@ -504,7 +504,7 @@
 }
 
 .dark-theme QListWidget::item:hover {
-    background-color: rgba(70, 70, 70, 150);
+    background-color: #202634;
 }
 
 .light-theme QListWidget::item:hover {
@@ -512,7 +512,7 @@
 }
 
 .dark-theme QListWidget::item:selected {
-    background-color: rgba(0, 122, 204, 150);
+    background-color: rgba(10, 132, 255, 0.5);
     color: #ffffff;
 }
 
@@ -523,14 +523,14 @@
 
 /* Danger Button for Delete */
 .dark-theme QPushButton[class="danger-button"] {
-    background-color: rgba(220, 20, 60, 150);
-    border: 1px solid rgba(255, 20, 60, 100);
+    background-color: #8a2b2b;
+    border: 1px solid #a33a3a;
     color: #ffffff;
 }
 
 .dark-theme QPushButton[class="danger-button"]:hover {
-    background-color: rgba(240, 40, 80, 180);
-    border-color: rgba(255, 40, 80, 150);
+    background-color: #a13939;
+    border-color: #b64949;
 }
 
 .light-theme QPushButton[class="danger-button"] {
@@ -552,7 +552,7 @@
 
 /* Main Title */
 .dark-theme QLabel[class="prompt-commands-title"] {
-    color: #ffffff;
+    color: #e6e6e6;
     background: transparent;
 }
 
@@ -563,7 +563,7 @@
 
 /* Description Text */
 .dark-theme QLabel[class="prompt-commands-description"] {
-    color: #e8e8e8;
+    color: #cbd1dc;
     background: transparent;
 }
 
@@ -574,7 +574,7 @@
 
 /* Panel Titles */
 .dark-theme QLabel[class="prompt-commands-panel-title"] {
-    color: #ffffff;
+    color: #e6e6e6;
     background: transparent;
     padding: 4px 0px;
 }
@@ -587,17 +587,17 @@
 
 /* Search Box */
 .dark-theme QLineEdit[class="prompt-commands-search"] {
-    background: #3c3c3c;
-    border: 1px solid #666666;
+    background: #1a1f27;
+    border: 1px solid #2a2f3a;
     border-radius: 6px;
     padding: 8px 12px;
-    color: #ffffff;
+    color: #e6e6e6;
     font-size: 13px;
 }
 
 .dark-theme QLineEdit[class="prompt-commands-search"]:focus {
-    border-color: #007acc;
-    background: #404040;
+    border-color: #0a84ff;
+    background: #1e2430;
 }
 
 .light-theme QLineEdit[class="prompt-commands-search"] {
@@ -616,11 +616,11 @@
 
 /* Command List */
 .dark-theme QListWidget[class="prompt-commands-list"] {
-    background: #2d2d2d;
-    border: 1px solid #555555;
+    background: #1a1f27;
+    border: 1px solid #2a2f3a;
     border-radius: 8px;
     padding: 4px;
-    color: #ffffff;
+    color: #e6e6e6;
     outline: none;
 }
 
@@ -650,8 +650,8 @@
 }
 
 .dark-theme QListWidget[class="prompt-commands-list"]::item:hover {
-    background: rgba(70, 70, 70, 120);
-    border-color: rgba(100, 100, 100, 80);
+    background: #202634;
+    border-color: #323a46;
 }
 
 .light-theme QListWidget[class="prompt-commands-list"]::item:hover {
@@ -660,8 +660,8 @@
 }
 
 .dark-theme QListWidget[class="prompt-commands-list"]::item:selected {
-    background: rgba(0, 122, 204, 120);
-    border-color: rgba(0, 122, 204, 200);
+    background: rgba(10, 132, 255, 0.3);
+    border-color: #0a84ff;
 }
 
 .light-theme QListWidget[class="prompt-commands-list"]::item:selected {
@@ -671,7 +671,7 @@
 
 /* Command List Item Labels */
 .dark-theme QLabel[class="prompt-commands-item-name"] {
-    color: #ffffff;
+    color: #e6e6e6;
     background: transparent;
 }
 
@@ -681,7 +681,7 @@
 }
 
 .dark-theme QLabel[class="prompt-commands-item-description"] {
-    color: #c8c8c8;
+    color: #b5bdc9;
     background: transparent;
 }
 
@@ -692,8 +692,8 @@
 
 /* List Control Buttons */
 .dark-theme QPushButton[class="prompt-commands-add-button"] {
-    background: rgba(46, 204, 113, 180);
-    border: 1px solid rgba(46, 204, 113, 200);
+    background: #2ecc71;
+    border: 1px solid #2ecc71;
     border-radius: 4px;
     padding: 6px 12px;
     color: #ffffff;
@@ -702,7 +702,7 @@
 }
 
 .dark-theme QPushButton[class="prompt-commands-add-button"]:hover {
-    background: rgba(46, 204, 113, 220);
+    background: #4bd786;
 }
 
 .light-theme QPushButton[class="prompt-commands-add-button"] {
@@ -721,22 +721,22 @@
 
 .dark-theme QPushButton[class="prompt-commands-duplicate-button"],
 .dark-theme QPushButton[class="prompt-commands-remove-button"] {
-    background: rgba(100, 100, 100, 150);
-    border: 1px solid rgba(150, 150, 150, 100);
+    background: #1a1f27;
+    border: 1px solid #323a46;
     border-radius: 4px;
     padding: 6px 12px;
-    color: #ffffff;
+    color: #e6e6e6;
     font-size: 12px;
 }
 
 .dark-theme QPushButton[class="prompt-commands-duplicate-button"]:hover,
 .dark-theme QPushButton[class="prompt-commands-remove-button"]:hover {
-    background: rgba(120, 120, 120, 180);
+    background: #202634;
 }
 
 .dark-theme QPushButton[class="prompt-commands-remove-button"]:hover {
-    background: rgba(220, 20, 60, 150);
-    border-color: rgba(255, 20, 60, 100);
+    background: #8a2b2b;
+    border-color: #a33a3a;
 }
 
 .light-theme QPushButton[class="prompt-commands-duplicate-button"],
@@ -763,18 +763,18 @@
 /* Form Input Fields */
 .dark-theme QLineEdit[class="prompt-commands-name-input"],
 .dark-theme QLineEdit[class="prompt-commands-description-input"] {
-    background: #3c3c3c;
-    border: 1px solid #666666;
+    background: #1a1f27;
+    border: 1px solid #2a2f3a;
     border-radius: 6px;
     padding: 8px 12px;
-    color: #ffffff;
+    color: #e6e6e6;
     font-size: 13px;
 }
 
 .dark-theme QLineEdit[class="prompt-commands-name-input"]:focus,
 .dark-theme QLineEdit[class="prompt-commands-description-input"]:focus {
-    border-color: #007acc;
-    background: #404040;
+    border-color: #0a84ff;
+    background: #1e2430;
 }
 
 .light-theme QLineEdit[class="prompt-commands-name-input"],
@@ -824,7 +824,7 @@
 
 /* System Prompt Label */
 .dark-theme QLabel[class="prompt-commands-prompt-label"] {
-    color: #ffffff;
+    color: #e6e6e6;
     background: transparent;
 }
 
@@ -835,8 +835,8 @@
 
 /* Help Button */
 .dark-theme QToolButton[class="prompt-commands-help-button"] {
-    background: rgba(0, 122, 204, 150);
-    border: 1px solid rgba(0, 122, 204, 200);
+    background: #0a84ff;
+    border: 1px solid #0a84ff;
     border-radius: 12px;
     color: #ffffff;
     font-weight: bold;
@@ -846,7 +846,7 @@
 }
 
 .dark-theme QToolButton[class="prompt-commands-help-button"]:hover {
-    background: rgba(0, 122, 204, 200);
+    background: #2994ff;
 }
 
 .light-theme QToolButton[class="prompt-commands-help-button"] {
@@ -866,17 +866,17 @@
 
 /* Templates Combo Box */
 .dark-theme QComboBox[class="prompt-commands-examples"] {
-    background: #3c3c3c;
-    border: 1px solid #666666;
+    background: #1a1f27;
+    border: 1px solid #2a2f3a;
     border-radius: 6px;
     padding: 6px 12px;
-    color: #ffffff;
+    color: #e6e6e6;
     font-size: 12px;
     min-width: 200px;
 }
 
 .dark-theme QComboBox[class="prompt-commands-examples"]:focus {
-    border-color: #007acc;
+    border-color: #0a84ff;
 }
 
 .light-theme QComboBox[class="prompt-commands-examples"] {
@@ -895,19 +895,19 @@
 
 /* System Prompt Text Editor */
 .dark-theme QTextEdit[class="prompt-commands-prompt-input"] {
-    background: #2d2d2d;
-    border: 1px solid #555555;
+    background: #1a1f27;
+    border: 1px solid #2a2f3a;
     border-radius: 8px;
     padding: 12px;
-    color: #f0f0f0;
+    color: #e6e6e6;
     font-size: 13px;
     font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
     line-height: 1.5;
 }
 
 .dark-theme QTextEdit[class="prompt-commands-prompt-input"]:focus {
-    border-color: #007acc;
-    background: #323232;
+    border-color: #0a84ff;
+    background: #1e2430;
 }
 
 .light-theme QTextEdit[class="prompt-commands-prompt-input"] {
@@ -928,8 +928,8 @@
 
 /* Test Button */
 .dark-theme QPushButton[class="prompt-commands-test-button"] {
-    background: rgba(155, 89, 182, 150);
-    border: 1px solid rgba(155, 89, 182, 200);
+    background: #9b59b6;
+    border: 1px solid #9b59b6;
     border-radius: 6px;
     padding: 8px 16px;
     color: #ffffff;
@@ -938,13 +938,13 @@
 }
 
 .dark-theme QPushButton[class="prompt-commands-test-button"]:hover {
-    background: rgba(155, 89, 182, 200);
+    background: #ab6ec3;
 }
 
 .dark-theme QPushButton[class="prompt-commands-test-button"]:disabled {
-    background: rgba(100, 100, 100, 100);
-    border-color: rgba(120, 120, 120, 80);
-    color: rgba(255, 255, 255, 100);
+    background: #1a1f27;
+    border-color: #2a2f3a;
+    color: rgba(230, 230, 230, 0.6);
 }
 
 .light-theme QPushButton[class="prompt-commands-test-button"] {
@@ -970,8 +970,8 @@
 /* Bottom Action Buttons */
 .dark-theme QPushButton[class="prompt-commands-import-button"],
 .dark-theme QPushButton[class="prompt-commands-export-button"] {
-    background: rgba(52, 152, 219, 150);
-    border: 1px solid rgba(52, 152, 219, 200);
+    background: #3498db;
+    border: 1px solid #3498db;
     border-radius: 6px;
     padding: 8px 16px;
     color: #ffffff;
@@ -980,7 +980,7 @@
 
 .dark-theme QPushButton[class="prompt-commands-import-button"]:hover,
 .dark-theme QPushButton[class="prompt-commands-export-button"]:hover {
-    background: rgba(52, 152, 219, 200);
+    background: #4aa3df;
 }
 
 .light-theme QPushButton[class="prompt-commands-import-button"],
@@ -999,8 +999,8 @@
 }
 
 .dark-theme QPushButton[class="prompt-commands-cancel-button"] {
-    background: rgba(149, 165, 166, 150);
-    border: 1px solid rgba(149, 165, 166, 200);
+    background: #95a5a6;
+    border: 1px solid #95a5a6;
     border-radius: 6px;
     padding: 10px 20px;
     color: #ffffff;
@@ -1008,7 +1008,7 @@
 }
 
 .dark-theme QPushButton[class="prompt-commands-cancel-button"]:hover {
-    background: rgba(149, 165, 166, 200);
+    background: #a5b2b3;
 }
 
 .light-theme QPushButton[class="prompt-commands-cancel-button"] {
@@ -1025,8 +1025,8 @@
 }
 
 .dark-theme QPushButton[class="prompt-commands-save-button"] {
-    background: rgba(46, 204, 113, 150);
-    border: 1px solid rgba(46, 204, 113, 200);
+    background: #2ecc71;
+    border: 1px solid #2ecc71;
     border-radius: 6px;
     padding: 10px 20px;
     color: #ffffff;
@@ -1035,7 +1035,7 @@
 }
 
 .dark-theme QPushButton[class="prompt-commands-save-button"]:hover {
-    background: rgba(46, 204, 113, 200);
+    background: #4bd786;
 }
 
 .light-theme QPushButton[class="prompt-commands-save-button"] {
@@ -1054,7 +1054,7 @@
 
 /* Test Dialog Labels */
 .dark-theme QLabel[class="prompt-commands-test-label"] {
-    color: #ffffff;
+    color: #e6e6e6;
     background: transparent;
     font-weight: bold;
     font-size: 12px;
@@ -1068,7 +1068,7 @@
 }
 
 .dark-theme QLabel[class="prompt-commands-test-note"] {
-    color: #b8b8b8;
+    color: #b5bdc9;
     background: transparent;
     font-style: italic;
     font-size: 11px;
@@ -1083,11 +1083,11 @@
 
 /* Help Dialog Content */
 .dark-theme QTextEdit[class="prompt-commands-help-content"] {
-    background: #2d2d2d;
-    border: 1px solid #555555;
+    background: #1a1f27;
+    border: 1px solid #2a2f3a;
     border-radius: 8px;
     padding: 15px;
-    color: #f0f0f0;
+    color: #e6e6e6;
     font-size: 13px;
     line-height: 1.6;
 }

@@ -1,57 +1,59 @@
-/* Dark Theme Styles */
+/* Dark Theme Styles (unified surfaces & borders) */
 .dark-theme QMainWindow {
-    background-color: rgba(30, 30, 30, 240);
-    border: 2px solid #555555;
+    /* Base window surface */
+    background-color: #14171f;
+    border: 1px solid #2a2f3a;
     border-radius: 12px;
 }
 
 .dark-theme #mainWidget {
-    background-color: rgba(30, 30, 30, 240);
+    /* Match main widget to window for seamless background */
+    background-color: #14171f;
     border-radius: 12px;
 }
 
 .dark-theme QWidget {
-    background-color: #1e1e1e;
-    color: #ffffff;
+    background-color: #14171f;
+    color: #e6e6e6;
 }
 
 .dark-theme QDialog {
-    background-color: #1e1e1e;
-    color: #ffffff;
-    border: 1px solid #555555;
+    background-color: #14171f;
+    color: #e6e6e6;
+    border: 1px solid #2a2f3a;
     border-radius: 8px;
 }
 
 .dark-theme QLineEdit {
-    background-color: rgba(50, 50, 50, 200);
-    border: 2px solid #555555;
+    background-color: #1a1f27; /* surface-1 */
+    border: 1px solid #2a2f3a;
     border-radius: 8px;
     padding: 8px 12px;
-    color: #ffffff;
+    color: #e6e6e6;
     font-size: 14px;
 }
 
 .dark-theme QLineEdit:focus {
-    border-color: #007acc;
-    background-color: rgba(60, 60, 60, 200);
+    border-color: #0a84ff;
+    background-color: #1e2430; /* focused surface */
 }
 
 .dark-theme QPushButton {
-    background-color: rgba(70, 70, 70, 200);
-    border: 1px solid #555555;
+    background-color: #1a1f27;
+    border: 1px solid #323a46;
     border-radius: 6px;
     padding: 6px 12px;
-    color: #ffffff;
+    color: #e6e6e6;
     font-size: 12px;
 }
 
 .dark-theme QPushButton:hover {
-    background-color: rgba(90, 90, 90, 200);
-    border-color: #007acc;
+    background-color: #202634;
+    border-color: #3a4352;
 }
 
 .dark-theme QPushButton:pressed {
-    background-color: rgba(50, 50, 50, 200);
+    background-color: #161a20;
 }
 
 .dark-theme QScrollArea {
@@ -60,30 +62,30 @@
 }
 
 .dark-theme QScrollBar:vertical {
-    background-color: rgba(50, 50, 50, 100);
+    background-color: #0f1217;
     width: 12px;
     border-radius: 6px;
 }
 
 .dark-theme QScrollBar::handle:vertical {
-    background-color: rgba(100, 100, 100, 150);
+    background-color: #2f3641;
     border-radius: 6px;
     min-height: 20px;
 }
 
 .dark-theme QScrollBar::handle:vertical:hover {
-    background-color: rgba(120, 120, 120, 150);
+    background-color: #3a4352;
 }
 
 .dark-theme QLabel {
-    color: #ffffff;
+    color: #e6e6e6;
 }
 
 .dark-theme QTextEdit {
-    background-color: rgba(40, 40, 40, 200);
-    border: 1px solid #555555;
+    background-color: #1a1f27;
+    border: 1px solid #2a2f3a;
     border-radius: 6px;
-    color: #ffffff;
+    color: #e6e6e6;
     padding: 8px;
 }
 

@@ -193,6 +193,9 @@ class MainWindow(QtWidgets.QMainWindow):
     
     def show_ai_chat(self):
         """Switch to AI chat mode."""
+        # Ensure the window is visible when opening chat directly via hotkey
+        if not self.isVisible():
+            self.show()
         self.current_mode = "ai_chat"
         self.main_layout.setCurrentWidget(self.ai_chat_widget)
         self.ai_chat_widget.focus_input()

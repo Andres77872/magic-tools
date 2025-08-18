@@ -162,7 +162,19 @@ class GlobalHotkeyManager(QtCore.QObject):
         }
         
         if name in callback_map:
-            return self.register_hotkey(name, new_sequence, callback_map[name])
+            result = self.register_hotkey(name, new_sequence, callback_map[name])
+            # Keep the alternate AI chat hotkey (Ctrl+Alt+Space) in sync to avoid duplicate callbacks
+            try:
+                if name == 'ai_chat':
+                    if self._format_hotkey(new_sequence) == self._format_hotkey("Ctrl+Alt+Space"):
+                        # If user set AI chat to Ctrl+Alt+Space, remove the alternate to avoid duplicates
+                        self.unregister_hotkey('ai_chat_alt')
+                    else:
+                        # Ensure alternate Ctrl+Alt+Space remains registered
+                        self.register_hotkey('ai_chat_alt', "Ctrl+Alt+Space", lambda: self.ai_chat_requested.emit())
+            except Exception:
+                pass
+            return result
         else:
             self.logger.error(f"Cannot update hotkey '{name}': unknown callback")
             return False
@@ -183,6 +195,14 @@ class GlobalHotkeyManager(QtCore.QObject):
         """
         self.register_hotkey('toggle', toggle_shortcut, lambda: self.toggle_requested.emit())
         self.register_hotkey('ai_chat', ai_chat_shortcut, lambda: self.ai_chat_requested.emit())
+        # Additional shortcut to open AI chat directly with Ctrl+Alt+Space,
+        # registered only if it's not already the configured AI chat shortcut.
+        try:
+            if self._format_hotkey(ai_chat_shortcut) != self._format_hotkey("Ctrl+Alt+Space"):
+                self.register_hotkey('ai_chat_alt', "Ctrl+Alt+Space", lambda: self.ai_chat_requested.emit())
+        except Exception:
+            # Non-fatal if alternate hotkey cannot be registered on some platforms
+            pass
         self.register_hotkey('quick_search', quick_search_shortcut, lambda: self.quick_search_requested.emit())
         self.register_hotkey('focus_selected', focus_selected_shortcut, lambda: self.focus_selected_requested.emit())
         self.register_hotkey('hide', hide_shortcut, lambda: self.hide_requested.emit())

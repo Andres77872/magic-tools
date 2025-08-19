@@ -411,6 +411,52 @@ class AIWorker(QThread):
             asyncio.set_event_loop(None)
 
 
+class ModelListWorker(QThread):
+    """Worker thread to load available AI models asynchronously."""
+    models_ready = pyqtSignal(list)
+    error_occurred = pyqtSignal(str)
+
+    def __init__(self, ai_manager: AIManager, logger=None):
+        super().__init__()
+        self.ai_manager = ai_manager
+        self.logger = logger or logging.getLogger(__name__)
+
+    def run(self):
+        loop = None
+        try:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+
+            async def _load():
+                try:
+                    return await self.ai_manager.list_models()
+                except Exception as e:
+                    self.error_occurred.emit(f"Model list error: {str(e)}")
+                    self.logger.error(f"Model list error: {e}")
+                    return []
+
+            task = loop.create_task(_load())
+            models = loop.run_until_complete(task)
+            if models is None:
+                models = []
+            self.models_ready.emit(models)
+        except Exception as e:
+            self.error_occurred.emit(f"Thread error: {str(e)}")
+            self.logger.error(f"ModelListWorker thread error: {e}")
+        finally:
+            try:
+                if loop is not None:
+                    pending = asyncio.all_tasks(loop)
+                    if pending:
+                        for t in pending:
+                            t.cancel()
+                        loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+                    loop.close()
+            except Exception:
+                pass
+            asyncio.set_event_loop(None)
+
+
 class AIChatWidget(QtWidgets.QWidget):
     """AI chat interface widget."""
     
@@ -444,6 +490,10 @@ class AIChatWidget(QtWidgets.QWidget):
         self.send_button = None
         self.status_label = None
         self.chat_manager_dialog = None
+        # Model selector
+        self.model_combo = None
+        self.model_list_worker = None
+        self._model_combo_loading = False
         
         # Chat state
         self.is_waiting_for_response = False
@@ -524,10 +574,27 @@ class AIChatWidget(QtWidgets.QWidget):
         self.ai_status_label = QtWidgets.QLabel(ai_status)
         self.ai_status_label.setAlignment(Qt.AlignRight)
         self.ai_status_label.setProperty("class", "chat-ai-status")
+
+        # Model selector UI
+        model_box = QtWidgets.QHBoxLayout()
+        model_box.setSpacing(6)
+        model_label = QtWidgets.QLabel("Model:")
+        model_label.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.model_combo = QtWidgets.QComboBox()
+        self.model_combo.setMinimumWidth(180)
+        self.model_combo.setEditable(False)
+        self.model_combo.setProperty("class", "chat-model-combo")
+        self.model_combo.currentTextChanged.connect(self.on_model_changed)
+        # Initial disabled state until loaded
+        self.model_combo.setEnabled(False)
+        self.model_combo.addItem("Loading models…")
+        model_box.addWidget(model_label)
+        model_box.addWidget(self.model_combo)
         
         top_row.addWidget(back_button)
         top_row.addLayout(title_container)
         top_row.addWidget(self.ai_status_label)
+        top_row.addLayout(model_box)
         
         # Chat management buttons (only if chat storage is available)
         if self.chat_storage:
@@ -576,6 +643,118 @@ class AIChatWidget(QtWidgets.QWidget):
             header_layout.addLayout(top_row)
         
         self.main_layout.addLayout(header_layout)
+        # Kick off model loading
+        self._init_model_selector()
+
+    def _init_model_selector(self):
+        """Initialize and load model options into the combo box."""
+        try:
+            if not self.model_combo:
+                return
+            self._model_combo_loading = True
+            self.model_combo.clear()
+            # Availability checks
+            if not self.ai_manager or not self.ai_manager.settings.enabled:
+                self.model_combo.addItem("AI disabled")
+                self.model_combo.setEnabled(False)
+                self._model_combo_loading = False
+                return
+            # Missing API key (for OpenAI)
+            try:
+                provider = getattr(self.ai_manager, "settings", None).provider if hasattr(self.ai_manager, "settings") else ""
+                api_key = getattr(self.ai_manager.settings, "api_key", "") if hasattr(self.ai_manager, "settings") else ""
+            except Exception:
+                provider, api_key = "", ""
+            if provider == "openai" and not api_key:
+                self.model_combo.addItem("Set API key to load models")
+                self.model_combo.setEnabled(False)
+                self._model_combo_loading = False
+                return
+
+            # Show loading placeholder and start worker
+            self.model_combo.addItem("Loading models…")
+            self.model_combo.setEnabled(False)
+            # Start worker
+            self.model_list_worker = ModelListWorker(self.ai_manager, logger=self.logger)
+            self.model_list_worker.models_ready.connect(self._on_models_ready)
+            self.model_list_worker.error_occurred.connect(self._on_model_list_error)
+            self.model_list_worker.start()
+        except Exception as e:
+            self.logger.error(f"Failed to initialize model selector: {e}")
+            self.model_combo.clear()
+            self.model_combo.addItem("Unavailable")
+            self.model_combo.setEnabled(False)
+            self._model_combo_loading = False
+
+    def _on_models_ready(self, models: List[str]):
+        """Populate model combo when worker returns models."""
+        try:
+            self._model_combo_loading = True
+            self.model_combo.clear()
+            items = list(models or [])
+            # Local fallback if nothing returned
+            if not items:
+                items = []
+                cur = getattr(self.ai_manager.settings, "model", "")
+                if cur:
+                    items.append(cur)
+                if getattr(self.ai_manager.settings, "provider", "") == "openai":
+                    items.extend(["gpt-4.1", "gpt-4.1-mini", "gpt-4o", "gpt-3.5-turbo"])
+                # De-duplicate
+                seen = set()
+                items = [m for m in items if (m and (m not in seen and not seen.add(m)))]
+            if not items:
+                self.model_combo.addItem("No models available")
+                self.model_combo.setEnabled(False)
+            else:
+                for m in items:
+                    self.model_combo.addItem(m)
+                # Select current
+                cur = getattr(self.ai_manager.settings, "model", "")
+                if cur and cur in items:
+                    self.model_combo.setCurrentText(cur)
+                else:
+                    self.model_combo.setCurrentIndex(0)
+                self.model_combo.setEnabled(True)
+        except Exception as e:
+            self.logger.error(f"Failed to populate models: {e}")
+            self.model_combo.clear()
+            self.model_combo.addItem("Unavailable")
+            self.model_combo.setEnabled(False)
+        finally:
+            self._model_combo_loading = False
+
+    def _on_model_list_error(self, message: str):
+        """Handle errors from the model list worker."""
+        try:
+            self.show_status(message)
+        except Exception:
+            pass
+
+    def on_model_changed(self, model_id: str):
+        """Handle user selection of a different model."""
+        try:
+            if self._model_combo_loading:
+                return
+            t = (model_id or "").strip()
+            if not t:
+                return
+            low = t.lower()
+            if (low.startswith("loading") or low.startswith("unavailable") or
+                low.startswith("set api key") or low.startswith("ai disabled") or
+                low.startswith("no models")):
+                return
+            # Update manager
+            updated = self.ai_manager.set_model(t)
+            if updated and self.config_manager:
+                try:
+                    self.config_manager.update_settings(ai={"model": t})
+                except Exception as e:
+                    self.logger.error(f"Failed to persist model selection: {e}")
+            self.show_status(f"Model set to {t}")
+        except Exception as e:
+            self.logger.error(f"Model selection error: {e}")
+            self.show_status(f"Model selection error: {e}")
     
     def setup_chat_display(self):
         """Setup the chat display area."""

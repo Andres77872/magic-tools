@@ -45,6 +45,15 @@ class BaseAIProvider(ABC):
         pass
     
     @abstractmethod
+    async def list_models(self) -> List[str]:
+        """List available model identifiers for this provider.
+        
+        Returns:
+            List of model IDs (strings). Empty if unavailable.
+        """
+        pass
+    
+    @abstractmethod
     def is_available(self) -> bool:
         """Check if the provider is available."""
         pass
@@ -108,6 +117,51 @@ class OpenAIProvider(BaseAIProvider):
     def is_available(self) -> bool:
         """Check if OpenAI provider is available."""
         return bool(self.api_key)
+    
+    async def list_models(self) -> List[str]:
+        """Fetch available models from OpenAI /models endpoint.
+        
+        Returns:
+            A list of model IDs, or empty list on failure.
+        """
+        if not bool(self.api_key):
+            return []
+        session = None
+        try:
+            session = await self._create_session(timeout=15.0)
+            if not session:
+                return []
+            async with session.get(f"{self.base_url}/models") as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    items = data.get("data", []) if isinstance(data, dict) else []
+                    ids = []
+                    for it in items:
+                        try:
+                            mid = it.get("id") if isinstance(it, dict) else None
+                            if isinstance(mid, str) and mid:
+                                ids.append(mid)
+                        except Exception:
+                            continue
+                    # Optional: de-duplicate and sort for UX
+                    ids = sorted(list(dict.fromkeys(ids)))
+                    return ids
+                else:
+                    try:
+                        text = await resp.text()
+                    except Exception:
+                        text = ""
+                    self.logger.error(f"OpenAI list_models error HTTP {resp.status}: {text[:200]}")
+                    return []
+        except Exception as e:
+            self.logger.error(f"OpenAI list_models exception: {e}")
+            return []
+        finally:
+            if session:
+                try:
+                    await session.close()
+                except Exception:
+                    pass
     
     async def generate_response(self, messages: List[Dict[str, str]]) -> AIResponse:
         """Generate response using OpenAI API."""

@@ -284,6 +284,91 @@ class AIManager:
             "tokens_used": str(getattr(self.current_provider, 'tokens_used', 0))
         }
 
+    def set_model(self, model_id: str) -> bool:
+        """Set the active model on the current provider and settings.
+        
+        Args:
+            model_id: The model identifier to use.
+        
+        Returns:
+            True if the model was set.
+        """
+        try:
+            if not isinstance(model_id, str) or not model_id.strip():
+                return False
+            model_id = model_id.strip()
+            # Update settings
+            self.settings.model = model_id
+            # Update provider configuration
+            if self.current_provider:
+                if hasattr(self.current_provider, "update_settings"):
+                    try:
+                        self.current_provider.update_settings(self.settings)
+                    except Exception as e:
+                        self.logger.error(f"Provider update_settings failed: {e}")
+                elif hasattr(self.current_provider, "model"):
+                    try:
+                        setattr(self.current_provider, "model", model_id)
+                    except Exception:
+                        pass
+            self.logger.info(f"Set AI model to: {model_id}")
+            return True
+        except Exception as e:
+            self.logger.error(f"Failed to set model '{model_id}': {e}")
+            return False
+
+    async def list_models(self) -> List[str]:
+        """List models from the current provider with safe fallbacks."""
+        try:
+            provider = self.current_provider
+            if provider and hasattr(provider, "list_models"):
+                models = await provider.list_models()
+                if not models:
+                    models = self._fallback_models()
+            else:
+                models = self._fallback_models()
+            # Ensure current model is present and first
+            cur = (self.settings.model or "").strip()
+            if cur:
+                if cur in models:
+                    # Move to front
+                    models = [cur] + [m for m in models if m != cur]
+                else:
+                    models = [cur] + models
+            # De-duplicate preserving order
+            seen = set()
+            ordered = []
+            for m in models:
+                if m and m not in seen:
+                    ordered.append(m)
+                    seen.add(m)
+            return ordered
+        except Exception as e:
+            self.logger.error(f"Error listing models: {e}")
+            return self._fallback_models()
+
+    def _fallback_models(self) -> List[str]:
+        """Return a conservative fallback list of models for the active provider."""
+        models: List[str] = []
+        # Always include the configured model if set
+        if isinstance(self.settings.model, str) and self.settings.model:
+            models.append(self.settings.model)
+        if self.settings.provider == "openai":
+            models.extend([
+                "gpt-4.1",
+                "gpt-4.1-mini",
+                "gpt-4o",
+                "gpt-3.5-turbo",
+            ])
+        # De-duplicate preserving order
+        seen = set()
+        out = []
+        for m in models:
+            if m and m not in seen:
+                out.append(m)
+                seen.add(m)
+        return out
+
     def cleanup(self):
         """Clean up AI resources."""
         self.logger.info("Cleaning up AI manager")
